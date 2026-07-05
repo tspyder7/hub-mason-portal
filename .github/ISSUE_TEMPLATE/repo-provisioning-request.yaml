@@ -1,0 +1,44 @@
+name: Request New Repository
+description: Submit a formal request to provision a new GitHub repository.
+title: "[Repo Request]: <repository-name>"
+labels: ["repo-request"]
+body:
+  - type: input
+    id: repo_name
+    attributes:
+      label: Repository Name
+      description: Use lowercase alphanumeric characters and hyphens only (e.g., identity-service).
+      placeholder: "example-service"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Repository Description
+      description: What is the primary purpose of this repository?
+      placeholder: "This repository will host..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: visibility
+    attributes:
+      label: Repository Visibility
+      description: Choose whether the repository should be public or private.
+      options:
+        - public
+        - private
+      default: 1
+      multiple: false
+    validations:
+      required: true
+
+  - type: input
+    id: topics
+    attributes:
+      label: Topics / Tags
+      description: Space-separated list of tags for discoverability (e.g., go microservice gRPC).
+      placeholder: "go microservice gRPC"
+    validations:
+      required: false
