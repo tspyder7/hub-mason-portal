@@ -10,3 +10,4 @@ for protected in $protected_branches; do
     echo "Create a branch and open a Pull Request instead."
     exit 1
   fi
+done
