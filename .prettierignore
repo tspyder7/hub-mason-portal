@@ -9,6 +9,8 @@ package-lock.json
 yarn-lock.json
 
 node_modules/
+.github/**/*.yml
+.github/**/*.yaml
 
 # build or bundles
 build/
