@@ -10,119 +10,69 @@ metadata:
     workflow: git
 ---
 
-## What I do
+## Rules
 
-- Analyze staged changes to understand what was modified
-- Generate a conventional commit message based on the diff
-- **ALWAYS present the message and wait for explicit user approval**
-- **NEVER execute `git commit` without `yes` / `y` confirmation**
-- **NEVER SKIP** any **HUSKY** commit message hooks
-- Allow the user to edit or regenerate the message before committing
+1. Run `git diff --staged` to inspect changes. If empty, prompt user to stage files and **STOP**.
+2. Generate a conventional commit message: `type(scope): subject` (imperative mood, no period, max 72 chars).
+3. Display the message AND a copyable `git commit -m "..."` command, then **STOP**.
+4. Wait for user reply: `yes` = commit, `edit` = revise, `no` = regenerate, `cancel` = abort.
+5. **NEVER** run `git add`/`git stage`, skip hooks (husky), use `--no-verify`, or modify code on failure.
+6. If `git commit` fails, report error and **STOP** — never auto-fix.
 
 ---
 
-## ⚠️ Mandatory Confirmation Gate
-**This is the single MOST IMPORTANT RULE in this skill. I MUST NOT run `git commit` without explicit user confirmation.**
-
-After generating a commit message, I MUST output the confirmation prompt below and then **STOP**.
-I do not proceed, I do not guess intent, I do not auto-commit.
-Execution only resumes when the user replies with `yes`, `edit`, or `no`.
+## Confirmation Gate
 
 ```
 ─────────────────────────────────────────
   Proposed commit message:
 
-  <type>(scope): subject line
+  <type>(scope): subject
 
-  Optional body lines
+  Optional body (what & why, not how)
 
-  Optional footer
+  Optional footer (Closes #123, BREAKING CHANGE: ...)
 ─────────────────────────────────────────
-  Commit with this message? [yes / edit / no]
+
+  git commit -m "<type>(scope): subject
+
+  Optional body
+
+  Optional footer>"
+
+─────────────────────────────────────────
+  [yes / edit / no / cancel]
 ```
 
-### Response handling
-
-| User reply | Action |
+| Reply | Action |
 |---|---|
-| `yes` / `y` / `Y` | Run `git commit -m "..."` exactly as shown |
-| `edit` / `e` | Print the message in an editable block, ask user to paste back the revised version, then show the gate again |
-| `no` / `n` / `N` | Discard and regenerate a new suggestion, then show the gate again |
-| Anything else | Treat as `no` — ask for clarification, do not commit |
+| `yes`/`y` | Run `git commit -m "..."`. On failure: report error, STOP. |
+| `edit`/`e` | Show editable block, user pastes back, re-show gate. |
+| `no`/`n` | Regenerate new suggestion, re-show gate. |
+| `cancel`/`c` | Abort — discard message, do nothing. |
 
 ---
 
-## Analysis Process
+## Change Types
 
-### Step 1 — Inspect staged changes
-```bash
-git diff --staged --name-only   # list changed files
-git diff --staged               # full diff for content analysis
-```
-
-### Step 2 — Categorize changes
-
-| Observation | Likely type |
+| Observation | Type |
 |---|---|
-| New feature files | `feat` |
-| Bug fix in existing file | `fix` |
-| Urgent production patch | `hotfix` |
-| Restructured code, no behavior change | `refactor` |
-| Test files only | `test` |
-| Docs / README | `docs` |
-| CI, tooling, deps | `chore` |
-| Breaking change | add `!` after type, add `BREAKING CHANGE:` footer |
-
-### Step 3 — Compose the message
-
-**Subject line** (required)
-- Max 72 characters
-- Imperative mood: "add" not "added"
-- No period at end
-- Lowercase after the type prefix
-- Format: `type(scope): subject`
-
-**Body** (optional, include when the *why* needs explanation)
-- Blank line after subject
-- Wrap at 72 chars
-- Bullet points for multiple distinct changes
-- Explain *what* and *why*, not *how*
-
-**Footer** (optional)
-- `BREAKING CHANGE: <description>`
-- `Closes #123`, `Fixes #456`
+| New feature | `feat` |
+| Bug fix | `fix` |
+| Urgent patch | `hotfix` |
+| Restructure (no behavior change) | `refactor` |
+| Tests only | `test` |
+| Docs | `docs` |
+| CI/deps/tooling | `chore` |
+| Performance | `perf` |
+| Breaking | add `!` after type + `BREAKING CHANGE:` footer |
 
 ---
 
-## Conventional Commit Types
+## Example
 
-| Type | Use case |
-|---|---|
-| `feat` | New features or capabilities |
-| `fix` | Bug fixes |
-| `hotfix` | Urgent production fixes |
-| `refactor` | Code restructuring, no behavior change |
-| `perf` | Performance improvements |
-| `test` | Adding or fixing tests |
-| `docs` | Documentation updates |
-| `style` | Formatting, linting (no logic change) |
-| `chore` | CI/CD, dependencies, tooling |
-
-### Follow Conventional Commits:
-
-Format: <type>(<scope>): <subject>
-Types: feat, fix, docs, style, refactor, perf, test, chore.
-Example: feat(db): implement schema initialization and seed data scripts
-
----
-
-## Examples
-
-### Feature addition
 ```
 ─────────────────────────────────────────
-  Proposed commit message:
-
   feat(auth): add JWT-based authentication
 
   - Implement login/logout flow
@@ -131,70 +81,15 @@ Example: feat(db): implement schema initialization and seed data scripts
 
   Closes #42
 ─────────────────────────────────────────
-  Commit with this message? [yes / edit / no]
-```
 
-### Bug fix
-```
-─────────────────────────────────────────
-  Proposed commit message:
-
-  fix(UserList): resolve memory leak on unmount
-
-  Subscription in useEffect was never cleaned up,
-  causing leak when component unmounts.
-
-  Closes #156
-─────────────────────────────────────────
-  Commit with this message? [yes / edit / no]
-```
-
-### Breaking change
-```
-─────────────────────────────────────────
-  Proposed commit message:
-
-  feat(api)!: update user response format
-
-  Response now returns { data, metadata } instead of
-  a direct array to support pagination and filtering.
-
-  BREAKING CHANGE: clients must update to new shape
-─────────────────────────────────────────
-  Commit with this message? [yes / edit / no]
-```
-
-### Edit flow
-```
-User: edit
-
-  Here is the message — paste it back with your changes:
-
-  feat(auth): add JWT-based authentication
+  git commit -m "feat(auth): add JWT-based authentication
 
   - Implement login/logout flow
   - Add token management service
   - Guard protected routes with auth middleware
 
-  Closes #42
-
-[user pastes revised version]
+  Closes #42"
 
 ─────────────────────────────────────────
-  Proposed commit message:
-
-  feat(auth): add OAuth2 and JWT authentication
-  ...
-─────────────────────────────────────────
-  Commit with this message? [yes / edit / no]
+  [yes / edit / no / cancel]
 ```
-
----
-
-## Tips for Good Messages
-
-1. **Be specific** — "fix login redirect loop" not "fix bug"
-2. **Imperative mood** — "add" not "added" / "adds"
-3. **Reference issues** — always include issue numbers when available
-4. **Flag breaking changes** — use `!` in subject and `BREAKING CHANGE:` in footer
-5. **Body = why, not how** — the diff already shows how
