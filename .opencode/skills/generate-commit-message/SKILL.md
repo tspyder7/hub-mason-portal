@@ -63,7 +63,8 @@ metadata:
 | Restructure (no behavior change) | `refactor` |
 | Tests only | `test` |
 | Docs | `docs` |
-| CI/deps/tooling | `chore` |
+| deps/tooling | `chore` |
+| CI/actions/workflows | `ci` |
 | Performance | `perf` |
 | Breaking | add `!` after type + `BREAKING CHANGE:` footer |
 
