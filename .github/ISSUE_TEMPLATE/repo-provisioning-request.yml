@@ -1,10 +1,14 @@
 name: Request New Repository
 description: Submit a formal request to provision a new GitHub repository.
-title: "[Repo Request]: <repository-name>"
-labels: ["repo/provision-repo"]
+title: "[Repo Request]:"
+labels: ["repository/provision-repository"]
 body:
+  - type: markdown
+    attributes:
+      value: "<!-- template-id: repo-provisioning-request.yml -->"
+
   - type: input
-    id: repo_name
+    id: name
     attributes:
       label: Repository Name
       description: Use lowercase alphanumeric characters and hyphens only (e.g., identity-service).
