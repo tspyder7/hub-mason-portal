@@ -1,5 +1,5 @@
 ---
-name: generate-pr-description
+name: pr-description
 description:
     Generate clear, well-structured pull request descriptions from code diffs, commit messages,
     branch names, or plain summaries. Use this skill whenever the user wants to write a PR
