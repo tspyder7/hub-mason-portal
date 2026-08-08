@@ -47,25 +47,9 @@ If the user provides nothing, ask for at minimum: what changed and why.
 
 ## Output format
 
-Always use this exact template — no extra sections, no reordering:
-
-```markdown
-**Title:** <concise PR title>
-
-## Description
-
-What does this PR do?
-
-## Changes
-
--
--
--
-
-## Related Issue
-
-Closes #
-```
+Use the PR template in `assets/pr-template.md` — read it and follow it exactly: no extra sections,
+no reordering. That file is the single source of truth for the template; if it changes, follow the
+updated template.
 
 Fill it in like this:
 
@@ -99,6 +83,32 @@ Jira/Linear ticket instead of a GitHub issue number, put it here anyway (e.g., `
 If no issue is known, leave it blank and note it to the user.
 
 **Tone**: Professional but readable. No corporate filler. Short sentences.
+
+---
+
+## Suggested labels
+
+After the description, suggest labels for the PR. The complete list of labels supported by this
+repo lives in `assets/labels.md` — read it and pick only from those.
+
+Rules:
+
+- **Type**: pick exactly one `type:*` label that best matches the dominant change in the PR
+  (feature → `type:feature`, fix → `type:bug` or `type:hotfix`, etc.). If it's a
+  dependency-only change use `type:dependencies`; docs-only → `type:docs`;
+  tests-only → `type:test`; CI-only → `type:ci`.
+- **Status**: pick one `status:*` label. If unknown, default the suggested status to
+  `status:ready-for-review` (PR described for review) — or `status:draft` if the PR is
+  incomplete.
+- **Priority**: pick one `priority:*` label. Default `priority:medium` unless the user says
+  the change is urgent (→ `priority:high` / `priority:critical`).
+- Never invent a label that isn't in `assets/labels.md`.
+
+Present the suggested labels as a single line, e.g.:
+
+`Labels: type:feature, status:ready-for-review, priority:medium`
+
+Ask the user if the labels look right; adjust on request.
 
 ---
 
@@ -150,6 +160,8 @@ request counts per IP and returns a proper 429 response when limits are exceeded
 Closes #
 ```
 
+**Suggested labels:** `type:feature, status:ready-for-review, priority:medium`
+
 ---
 
 ### Example 2 — From branch name only
@@ -175,12 +187,15 @@ seeing totals off by ±$0.01 on certain order amounts.
 Closes JIRA-891
 ```
 
+**Suggested labels:** `type:bug, status:ready-for-review, priority:low`
+
 ---
 
 ## Output delivery
 
 - Present the description in a code block (so it's easy to copy)
-- After the block, offer: "Want me to adjust the tone, add more detail to any section, or shorten
+- After the block, show the suggested labels (see [Suggested labels](#suggested-labels))
+- Then offer: "Want me to adjust the tone, add more detail to any section, or shorten
   it?"
 - If you made assumptions (e.g., inferred the ticket number from the branch name), call them out
   briefly below the description
