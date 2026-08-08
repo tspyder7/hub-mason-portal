@@ -1,9 +1,18 @@
+import { randomUUID } from 'node:crypto';
+
 import * as github from '@actions/github';
 import type { Issue, PullRequest } from '@octokit/webhooks-types';
-import type { GithubEvent } from '../types';
+import type { GithubEvent } from '../../../types';
 
-export const getGithubEvent = (): GithubEvent => {
-    const { payload, eventName, repo, workflow, runId, actor } = github.context;
+export const getEvent = (): GithubEvent => {
+    const {
+        payload,
+        eventName,
+        repo: { repo, owner },
+        workflow,
+        runId,
+        actor,
+    } = github.context;
 
     const pullRequest = payload.pull_request as PullRequest;
     const issue = payload.issue as Issue;
@@ -12,10 +21,11 @@ export const getGithubEvent = (): GithubEvent => {
         eventName,
         issue,
         pullRequest,
-        repo: { repo: repo.repo, owner: repo.owner },
+        repo: { repo, owner },
         action: payload.action,
         workflow,
         runId,
         actor,
+        requestId: randomUUID(),
     };
 };

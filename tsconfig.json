@@ -20,7 +20,8 @@
         "noUnusedParameters": true,
         "noPropertyAccessFromIndexSignature": true,
         "types": [
-            "node"
+            "node",
+            "vitest/globals"
         ]
     }
 }

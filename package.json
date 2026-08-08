@@ -6,7 +6,8 @@
     "scripts": {
         "lint": "eslint",
         "format": "prettier --write \"**/*.+(js|ts)\"",
-        "prepare": "husky"
+        "prepare": "husky",
+        "test": "vitest --coverage"
     },
     "devDependencies": {
         "@commitlint/cli": "^21.2.1",
@@ -14,9 +15,13 @@
         "@eslint/js": "^10.0.1",
         "@eslint/json": "^2.0.1",
         "@eslint/markdown": "^8.0.3",
+        "@octokit/plugin-rest-endpoint-methods": "^17.0.0",
         "@octokit/webhooks-types": "^7.6.1",
         "@types/bun": "latest",
+        "@types/lodash": "^4.17.24",
+        "@types/mdast": "^4.0.4",
         "@typescript-eslint/eslint-plugin": "^8.63.0",
+        "@vitest/coverage-v8": "4.1.10",
         "eslint": "^10.7.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.6",
@@ -27,14 +32,22 @@
         "prettier": "^3.9.5",
         "tslint-config-prettier": "^1.18.0",
         "typescript": "^5.9.2",
-        "typescript-eslint": "^8.63.0"
+        "typescript-eslint": "^8.63.0",
+        "vitest": "^4.1.10"
     },
     "peerDependencies": {
         "typescript": "^5.9.2"
     },
     "dependencies": {
         "@actions/core": "^3.0.1",
-        "@actions/github": "^9.1.1"
+        "@actions/github": "^9.1.1",
+        "@github/issue-parser": "^2.0.0",
+        "lodash": "^4.18.1",
+        "mdast-util-gfm-table": "^2.0.0",
+        "mdast-util-to-markdown": "^2.1.2",
+        "octokit": "^5.0.5",
+        "serialize-error": "^13.0.1",
+        "zod": "^4.4.3"
     },
     "lint-staged": {
         "*.{ts,tsx,mjs}": [
