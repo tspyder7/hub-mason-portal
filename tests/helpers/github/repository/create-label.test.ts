@@ -1,9 +1,9 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
 import { AppContext } from '../../../../src/context/app-context';
 import { createLabelInRepo } from '../../../../src/helpers/github/repository';
 import { getLabelsFromRepo } from '../../../../src/helpers/github/repository/get-labels';
 import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
+import { logger } from '../../../../src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -16,10 +16,13 @@ const githubCreateLabelMock = vi.fn();
 
 vi.mock('../../../../src/helpers/github/repository/get-labels');
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
@@ -56,7 +59,7 @@ describe('createLabelInRepo tests', () => {
             description: '',
             color: undefined,
         });
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Created label in john-doe/test-repo: repo-request',
         );
     });
@@ -70,7 +73,7 @@ describe('createLabelInRepo tests', () => {
         await createLabelInRepo({ name: 'repo-request' } as Label);
 
         expect(githubCreateLabelMock).not.toHaveBeenCalled();
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Label already exists, skipping label creation',
         );
     });
@@ -82,9 +85,11 @@ describe('createLabelInRepo tests', () => {
             createLabelInRepo({ name: 'repo-request' } as Label),
         ).rejects.toThrow('Network error');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to create label in john-doe/test-repo',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

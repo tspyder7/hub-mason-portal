@@ -1,4 +1,3 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
 import { AppContext } from '../../src/context/app-context';
 import {
@@ -7,6 +6,7 @@ import {
     removeLabelFromIssue,
 } from '../../src/helpers/github/issues';
 import { StatusLabel } from '../../src/utils/constants';
+import { logger } from '../../src/utils/logger';
 import { updateStatus } from '../../src/workflow/status-label';
 import { createGithubEvent } from '../fixtures/github-event';
 
@@ -22,11 +22,13 @@ vi.mock('../../src/helpers/github/issues', () => ({
     removeLabelFromIssue: vi.fn(),
 }));
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-    warning: vi.fn(),
+vi.mock('../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 const requestLabel = {
@@ -49,7 +51,7 @@ describe('updateStatus tests', () => {
         await updateStatus(1, StatusLabel.INITIATED);
 
         expect(getLabelsFromIssue).toHaveBeenCalledWith(1);
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Updating status: status:opened -> status:initiated',
         );
         expect(removeLabelFromIssue).toHaveBeenCalledWith({
@@ -60,10 +62,10 @@ describe('updateStatus tests', () => {
             issueNumber: 1,
             label: StatusLabel.INITIATED,
         });
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Updated status to status:initiated',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should remove every status label present on the issue', async () => {
@@ -74,7 +76,7 @@ describe('updateStatus tests', () => {
 
         await updateStatus(1, StatusLabel.INITIATED);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Updating status: status:opened, status:failed -> status:initiated',
         );
         expect(removeLabelFromIssue).toHaveBeenNthCalledWith(1, {
@@ -115,7 +117,7 @@ describe('updateStatus tests', () => {
 
         await updateStatus(1, StatusLabel.OPENED);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Adding status label: status:opened',
         );
         expect(removeLabelFromIssue).not.toHaveBeenCalled();
@@ -123,10 +125,10 @@ describe('updateStatus tests', () => {
             issueNumber: 1,
             label: StatusLabel.OPENED,
         });
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Updated status to status:opened',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should throw an error if removing the current status label fails', async () => {
@@ -140,10 +142,14 @@ describe('updateStatus tests', () => {
         );
 
         expect(addLabelToIssue).not.toHaveBeenCalled();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to remove label',
+                }),
+            }),
             'Failed to update status from status:opened to status:initiated on john-doe/test-repo#1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should throw an error if adding the new status label fails', async () => {
@@ -157,10 +163,14 @@ describe('updateStatus tests', () => {
         );
 
         expect(removeLabelFromIssue).toHaveBeenCalledOnce();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to add label',
+                }),
+            }),
             'Failed to update status from status:opened to status:initiated on john-doe/test-repo#1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should restore the removed status labels when adding the new one fails', async () => {
@@ -188,10 +198,10 @@ describe('updateStatus tests', () => {
             issueNumber: 1,
             label: StatusLabel.FAILED,
         });
-        expect(core.warning).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledWith(
             'Restored previous status label: status:opened',
         );
-        expect(core.warning).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledWith(
             'Restored previous status label: status:failed',
         );
     });
@@ -207,10 +217,14 @@ describe('updateStatus tests', () => {
         );
 
         expect(removeLabelFromIssue).not.toHaveBeenCalled();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to add label',
+                }),
+            }),
             'Failed to update status to status:opened on john-doe/test-repo#1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should log an error if restoring a removed status label fails', async () => {
@@ -223,11 +237,23 @@ describe('updateStatus tests', () => {
             'Failed to add label',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to restore label',
+                }),
+            }),
             'Failed to restore previous status label: status:opened',
         );
-        expect(core.warning).not.toHaveBeenCalled();
-        expect(core.debug).toHaveBeenCalledTimes(2);
+        expect(logger.warn).not.toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to add label',
+                }),
+            }),
+            'Failed to update status from status:opened to status:initiated on john-doe/test-repo#1',
+        );
     });
 
     it('should throw an error if fetching the issue labels fails', async () => {
@@ -241,9 +267,13 @@ describe('updateStatus tests', () => {
 
         expect(removeLabelFromIssue).not.toHaveBeenCalled();
         expect(addLabelToIssue).not.toHaveBeenCalled();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to fetch labels',
+                }),
+            }),
             'Failed to update status to status:initiated on john-doe/test-repo#1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

@@ -1,7 +1,6 @@
-import * as core from '@actions/core';
-import { serializeError } from 'serialize-error';
 import { AppContext } from '../../../context/app-context';
 import type { AddLabelToIssueInput } from '../../../types';
+import { logger } from '../../../utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 import { createLabelInRepo } from '../repository/create-label';
 
@@ -12,7 +11,7 @@ export const addLabelToIssue = async (input: AddLabelToIssueInput) => {
     } = AppContext.getInstance();
 
     try {
-        core.info(
+        logger.info(
             `Adding ${label.name} label to issue: ${owner}/${repo}#${issueNumber}`,
         );
 
@@ -27,14 +26,14 @@ export const addLabelToIssue = async (input: AddLabelToIssueInput) => {
             repo,
         });
 
-        core.info(
+        logger.info(
             `Added ${label.name} label to issue: ${owner}/${repo}#${issueNumber}`,
         );
     } catch (err) {
-        core.error(
+        logger.error(
+            { err },
             `Failed to add ${label.name} label to issue: ${owner}/${repo}#${issueNumber}`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
 
         throw err;
     }

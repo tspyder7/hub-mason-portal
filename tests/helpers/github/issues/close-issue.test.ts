@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { AppContext } from '../../../../src/context/app-context';
 import { OctokitClient } from '../../../../src/helpers/github/client/';
 import { closeIssue } from '../../../../src/helpers/github/issues/close-issue';
+import { logger } from '../../../../src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -12,10 +12,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
 
 const updateMock = vi.fn();
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
@@ -38,7 +41,7 @@ describe('closeIssue tests', () => {
     it('should close the issue successfully', async () => {
         await closeIssue({ issueNumber: 10 });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Closing issue: john-doe/test-repo#10',
         );
 
@@ -49,10 +52,10 @@ describe('closeIssue tests', () => {
             state: 'closed',
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Closed issue: john-doe/test-repo#10',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should log error if failed to close the issue', async () => {
@@ -62,13 +65,15 @@ describe('closeIssue tests', () => {
 
         await closeIssue({ issueNumber: 10 });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Closing issue: john-doe/test-repo#10',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network issue' }),
+            }),
             'Failed to close issue: john-doe/test-repo#10',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

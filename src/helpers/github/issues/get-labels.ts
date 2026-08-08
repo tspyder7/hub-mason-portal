@@ -1,7 +1,6 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
-import { serializeError } from 'serialize-error';
 import { AppContext } from '../../../context/app-context';
+import { logger } from '../../../utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const getLabelsFromIssue = async (
@@ -12,7 +11,7 @@ export const getLabelsFromIssue = async (
     } = AppContext.getInstance();
 
     try {
-        core.info(
+        logger.info(
             `Fetching labels from issue: ${owner}/${repo}#${issueNumber}`,
         );
 
@@ -24,16 +23,16 @@ export const getLabelsFromIssue = async (
             issue_number: issueNumber,
         });
 
-        core.info(
+        logger.info(
             `Fetched labels from issue: ${owner}/${repo}#${issueNumber}: ${labels.length}`,
         );
 
         return labels;
     } catch (err) {
-        core.error(
+        logger.error(
+            { err },
             `Failed to fetch labels from issue: ${owner}/${repo}#${issueNumber}`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
 
         throw err;
     }

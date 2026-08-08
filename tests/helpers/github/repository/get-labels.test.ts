@@ -1,8 +1,8 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
 import { AppContext } from '../../../../src/context/app-context';
 import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
 import { getLabelsFromRepo } from '../../../../src/helpers/github/repository';
+import { logger } from '../../../../src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -13,10 +13,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
 
 const listLabelsForRepo = vi.fn();
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
@@ -47,10 +50,10 @@ describe('getLabelsFromRepo tests', () => {
     it('should get labels from the repository', async () => {
         const result = await getLabelsFromRepo();
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Fetching labels from john-doe/test-repo',
         );
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Fetched labels from john-doe/test-repo: 2',
         );
         expect(result).toStrictEqual(repoLabels);
@@ -61,11 +64,13 @@ describe('getLabelsFromRepo tests', () => {
 
         await expect(getLabelsFromRepo()).rejects.toThrow('Network error');
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Fetching labels from john-doe/test-repo',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to fetch labels from john-doe/test-repo',
         );
     });

@@ -1,7 +1,6 @@
-import { serializeError } from 'serialize-error';
-import * as core from '@actions/core';
 import { AppContext } from '../../../context/app-context';
 import type { UpdateCommentOnIssueInput } from '../../../types';
+import { logger } from '../../../utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const updateCommentOnIssue = async (
@@ -13,7 +12,7 @@ export const updateCommentOnIssue = async (
     } = AppContext.getInstance();
 
     try {
-        core.info(`Updating comment ${commentId} on: ${owner}/${repo}`);
+        logger.info(`Updating comment ${commentId} on: ${owner}/${repo}`);
 
         const client = OctokitClient.getInstance();
 
@@ -24,12 +23,12 @@ export const updateCommentOnIssue = async (
             body: comment,
         });
 
-        core.info(`Updated comment ${commentId} on: ${owner}/${repo}`);
+        logger.info(`Updated comment ${commentId} on: ${owner}/${repo}`);
     } catch (err) {
-        core.error(
+        logger.error(
+            { err },
             `Failed to update comment ${commentId} on: ${owner}/${repo}`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
 
         throw err;
     }

@@ -1,7 +1,6 @@
-import * as core from '@actions/core';
-import { serializeError } from 'serialize-error';
 import { RequestError } from 'octokit';
 import { AppContext } from '../../../context/app-context';
+import { logger } from '../../../utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const checkRepoExists = async (
@@ -15,7 +14,7 @@ export const checkRepoExists = async (
     const requestedOwner = owner ?? currentOwner;
 
     try {
-        core.info(`Checking if repository ${requestedOwner}/${repo} exists`);
+        logger.info(`Checking if repository ${requestedOwner}/${repo} exists`);
 
         const client = OctokitClient.getInstance();
 
@@ -24,25 +23,20 @@ export const checkRepoExists = async (
             repo,
         });
 
-        core.info(`Repository ${requestedOwner}/${repo} exists`);
+        logger.info(`Repository ${requestedOwner}/${repo} exists`);
 
         return true;
     } catch (err) {
-        const error =
-            err instanceof RequestError
-                ? (err as RequestError)
-                : serializeError(err);
-
-        if (error.status === 404) {
-            core.info(`Repository ${requestedOwner}/${repo} does not exist`);
+        if (err instanceof RequestError && err.status === 404) {
+            logger.info(`Repository ${requestedOwner}/${repo} does not exist`);
             return false;
         }
 
-        core.error(
+        logger.error(
+            { err },
             `Failed to check if repository ${requestedOwner}/${repo} exists`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
 
-        throw error;
+        throw err;
     }
 };

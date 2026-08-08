@@ -1,8 +1,8 @@
-import * as core from '@actions/core';
 import { AppContext } from '../../../context/app-context';
 import { parseIssue } from '../../../parser/issue-parser';
 import type { GithubEvent } from '../../../types';
 import { IssueType, StatusLabel } from '../../../utils/constants';
+import { logger } from '../../../utils/logger';
 import { createSteps } from '../../../workflow/steps';
 import { updateStatus } from '../../../workflow/status-label';
 import { STEPS, Step } from './steps';
@@ -17,7 +17,7 @@ export const handle = async (event: GithubEvent) => {
     await beginStep(Step.VERIFY_ISSUE);
 
     if (!issueBody) {
-        core.error('Issue Body is empty or does not exists');
+        logger.error('Issue Body is empty or does not exists');
         throw new Error('issueBody not found');
     }
 
@@ -29,10 +29,10 @@ export const handle = async (event: GithubEvent) => {
         payload: request as unknown as Record<string, unknown>,
     });
 
-    core.info(`Handling issue #${issueNumber}`);
-    core.info(`ProvisionRepositoryRequest: ${JSON.stringify(request)}`);
-    core.info('Initiating repository provisioning workflow...');
-    core.info(`Request-Id: ${event.requestId}`);
+    logger.info(`Handling issue #${issueNumber}`);
+    logger.info(`ProvisionRepositoryRequest: ${JSON.stringify(request)}`);
+    logger.info('Initiating repository provisioning workflow...');
+    logger.info(`Request-Id: ${event.requestId}`);
 
     await finishStep(Step.VERIFY_ISSUE);
 

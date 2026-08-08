@@ -1,6 +1,6 @@
-import * as core from '@actions/core';
 import type { GithubEvent } from '../../src/types';
 import type { Label } from '@octokit/webhooks-types';
+import { logger } from '../../src/utils/logger';
 
 vi.mock('../../src/utils/constants', async (importOriginal) => {
     const actualModule =
@@ -17,8 +17,13 @@ vi.mock('../../src/utils/constants', async (importOriginal) => {
 
 import { validateEvent } from '../../src/parser/validator';
 
-vi.mock('@actions/core', () => ({
-    warning: vi.fn(),
+vi.mock('../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 describe('validateEvent tests', () => {
@@ -37,8 +42,8 @@ describe('validateEvent tests', () => {
 
         expect(() => validateEvent(event)).toThrow('Unsupported GitHubEvent');
 
-        expect(core.warning).toHaveBeenCalledTimes(1);
-        expect(core.warning).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledTimes(1);
+        expect(logger.warn).toHaveBeenCalledWith(
             'Unsupported event & action: pull-request & closed',
         );
     });
@@ -57,8 +62,8 @@ describe('validateEvent tests', () => {
 
         expect(() => validateEvent(event)).toThrow('Unsupported Issue');
 
-        expect(core.warning).toHaveBeenCalledTimes(1);
-        expect(core.warning).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledTimes(1);
+        expect(logger.warn).toHaveBeenCalledWith(
             'Unsupported issue, no valid issueType is set in labels',
         );
     });
@@ -76,6 +81,6 @@ describe('validateEvent tests', () => {
         } as unknown as GithubEvent;
 
         expect(() => validateEvent(event)).not.toThrow();
-        expect(core.warning).toHaveBeenCalledTimes(0);
+        expect(logger.warn).toHaveBeenCalledTimes(0);
     });
 });

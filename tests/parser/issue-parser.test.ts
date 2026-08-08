@@ -1,11 +1,16 @@
 import { readFileSync } from 'fs';
 import { parseIssue } from '../../src/parser/issue-parser';
-import * as core from '@actions/core';
+import { logger } from '../../src/utils/logger';
 
 vi.mock('fs');
 
-vi.mock('@actions/core', () => ({
-    error: vi.fn(),
+vi.mock('../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 const issueBody = `
@@ -68,7 +73,7 @@ describe('issue-parser tests', () => {
             ),
         ).toThrow('template-id not found in issueBody');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
             'Issue body does not include template-id',
         );
     });

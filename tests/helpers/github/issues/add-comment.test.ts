@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { AppContext } from '../../../../src/context/app-context';
 import { addCommentToIssue } from '../../../../src/helpers/github/issues';
 import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
+import { logger } from '../../../../src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -10,10 +10,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 const createComment = vi.fn();
@@ -51,7 +54,7 @@ describe('addCommentToIssue tests', () => {
             owner: 'john-doe',
             repo: 'test-repo',
         });
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Posted comment successfully to: john-doe/test-repo#42 (comment id: 123)',
         );
         expect(commentId).toBe(123);
@@ -64,9 +67,11 @@ describe('addCommentToIssue tests', () => {
             addCommentToIssue({ issueNumber: 42, comment: 'Hello' }),
         ).rejects.toThrow('Network error');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to post comment to: john-doe/test-repo#42',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

@@ -1,12 +1,15 @@
 import type { Issue, Label, PullRequest } from '@octokit/webhooks-types';
-import * as core from '@actions/core';
 import { logEvent } from '../../../../src/helpers/github/events';
+import { logger } from '../../../../src/utils/logger';
 import type { GithubEvent } from '../../../../src/types';
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    startGroup: vi.fn(),
-    endGroup: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 describe('logEvent tests', () => {
@@ -37,23 +40,22 @@ describe('logEvent tests', () => {
         vi.resetAllMocks();
     });
 
-    it('should log event details in Github Event group', () => {
+    it('should log event details', () => {
         logEvent(event);
 
-        expect(core.startGroup).toHaveBeenCalledWith('Github Event');
-        expect(core.info).toHaveBeenCalledWith('Event name: test-event');
-        expect(core.info).toHaveBeenCalledWith('Action: test');
-        expect(core.info).toHaveBeenCalledWith('Issue title: test issue');
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith('Github Event');
+        expect(logger.info).toHaveBeenCalledWith('Event name: test-event');
+        expect(logger.info).toHaveBeenCalledWith('Action: test');
+        expect(logger.info).toHaveBeenCalledWith('Issue title: test issue');
+        expect(logger.info).toHaveBeenCalledWith(
             'Issue body: this is test issue body',
         );
-        expect(core.info).toHaveBeenCalledWith('Issue number: 100');
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith('Issue number: 100');
+        expect(logger.info).toHaveBeenCalledWith(
             'Issue labels: test/label1, test/label2',
         );
-        expect(core.info).toHaveBeenCalledWith('Workflow: test-workflow');
-        expect(core.info).toHaveBeenCalledWith('Run ID: 1234567890');
-        expect(core.endGroup).toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledWith('Workflow: test-workflow');
+        expect(logger.info).toHaveBeenCalledWith('Run ID: 1234567890');
     });
 
     it('should log empty Issue labels if not labels does not exists', () => {
@@ -62,6 +64,6 @@ describe('logEvent tests', () => {
             issue: { labels: undefined } as unknown as Issue,
         });
 
-        expect(core.info).toHaveBeenCalledWith('Issue labels: ');
+        expect(logger.info).toHaveBeenCalledWith('Issue labels: ');
     });
 });

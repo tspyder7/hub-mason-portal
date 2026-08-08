@@ -1,9 +1,14 @@
-import * as core from '@actions/core';
 import { checkRepoExists } from '../../../../src/helpers/github/repository';
 import { validateRequest } from '../../../../src/handlers/repository/provision-repository/request-validator';
+import { logger } from '../../../../src/utils/logger';
 
-vi.mock('@actions/core', () => ({
-    error: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.mock('../../../../src/helpers/github/repository', () => ({
@@ -39,7 +44,7 @@ describe('validateRequest', () => {
             'Repository name should not contain empty spaces',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
             'Repository name should not contain empty spaces',
         );
         expect(checkRepoExists).not.toHaveBeenCalled();
@@ -66,7 +71,7 @@ describe('validateRequest', () => {
         ).rejects.toThrow('Repository existing-repo already exists');
 
         expect(checkRepoExists).toHaveBeenCalledWith('existing-repo');
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
             'Repository existing-repo already exists',
         );
     });

@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { AppContext } from '../../../../src/context/app-context';
 import { OctokitClient } from '../../../../src/helpers/github/client/';
 import { removeLabelFromIssue } from '../../../../src/helpers/github/issues/remove-label';
+import { logger } from '../../../../src/utils/logger';
 import type { RemoveLabelResponse } from '../../../../src/types';
 import { RequestError } from 'octokit';
 import type { Label } from '@octokit/webhooks-types';
@@ -15,10 +15,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
 
 const removeLabelMock = vi.fn();
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
@@ -46,7 +49,7 @@ describe('removeLabelFromIssue tests', () => {
             label: { name: 'bug' } as Label,
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Removing bug label from issue: john-doe/test-repo#10',
         );
 
@@ -57,10 +60,10 @@ describe('removeLabelFromIssue tests', () => {
             name: 'bug',
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Removed bug label from issue: john-doe/test-repo#10',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should log & return if label not found for removal', async () => {
@@ -79,15 +82,15 @@ describe('removeLabelFromIssue tests', () => {
             label: { name: 'unknown-label' } as Label,
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Removing unknown-label label from issue: john-doe/test-repo#10',
         );
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Label not found on issue. skipping the removeLabel',
         );
 
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should throw error if there is no sufficient permission for removeLabel', async () => {
@@ -112,11 +115,16 @@ describe('removeLabelFromIssue tests', () => {
             }),
         ).rejects.toThrow(error);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Removing bug label from issue: john-doe/test-repo#10',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Insufficient Permission',
+                }),
+            }),
             'Failed to remove bug label from issue: john-doe/test-repo#10',
         );
     });
@@ -133,11 +141,14 @@ describe('removeLabelFromIssue tests', () => {
             }),
         ).rejects.toThrow(error.message);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Removing bug label from issue: john-doe/test-repo#10',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network issue' }),
+            }),
             'Failed to remove bug label from issue: john-doe/test-repo#10',
         );
     });

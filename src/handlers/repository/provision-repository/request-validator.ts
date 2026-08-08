@@ -1,5 +1,5 @@
-import * as core from '@actions/core';
 import { checkRepoExists } from '../../../helpers/github/repository';
+import { logger } from '../../../utils/logger';
 import { z } from 'zod';
 import type { ProvisionRepositoryRequest } from './type';
 
@@ -18,14 +18,14 @@ export const validateRequest = async (
 
     if (!parsed.success) {
         const errorMessage = parsed.error.issues[0]!.message;
-        core.error(errorMessage);
+        logger.error(errorMessage);
         throw new Error(errorMessage);
     }
 
     const isRepoExists = await checkRepoExists(parsed.data.name);
 
     if (isRepoExists) {
-        core.error(`Repository ${parsed.data.name} already exists`);
+        logger.error(`Repository ${parsed.data.name} already exists`);
         throw new Error(`Repository ${parsed.data.name} already exists`);
     }
 };

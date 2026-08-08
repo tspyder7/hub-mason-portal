@@ -1,9 +1,9 @@
-import * as core from '@actions/core';
 import { AppContext } from '../../../../src/context/app-context';
 import { handle } from '../../../../src/handlers/repository/provision-repository/handler';
 import { parseIssue } from '../../../../src/parser/issue-parser';
 import type { GithubEvent } from '../../../../src/types';
 import { StatusLabel } from '../../../../src/utils/constants';
+import { logger } from '../../../../src/utils/logger';
 import { validateRequest } from '../../../../src/handlers/repository/provision-repository/request-validator';
 import { updateStatus } from '../../../../src/workflow/status-label';
 import { createGithubEvent } from '../../../fixtures/github-event';
@@ -19,9 +19,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.mock('../../../../src/parser/issue-parser', () => ({
@@ -72,7 +76,7 @@ describe('provision-repository handler', () => {
             requestId: 'R-1',
             payload: { name: 'new-repo' },
         });
-        expect(core.info).toHaveBeenCalledWith('Handling issue #1');
+        expect(logger.info).toHaveBeenCalledWith('Handling issue #1');
         expect(validateRequest).toHaveBeenCalledWith({
             name: 'new-repo',
         });
@@ -94,7 +98,7 @@ describe('provision-repository handler', () => {
         await expect(handle(event)).rejects.toThrow('issueBody not found');
 
         expect(beginStep).toHaveBeenCalledWith('verify-issue');
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
             'Issue Body is empty or does not exists',
         );
         expect(finishStep).not.toHaveBeenCalled();

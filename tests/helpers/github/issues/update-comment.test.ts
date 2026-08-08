@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { AppContext } from '../../../../src/context/app-context';
 import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
 import { updateCommentOnIssue } from '../../../../src/helpers/github/issues';
+import { logger } from '../../../../src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -10,10 +10,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 const updateComment = vi.fn();
@@ -51,7 +54,7 @@ describe('updateCommentOnIssue tests', () => {
             comment_id: 7,
             body: 'Updated body',
         });
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Updated comment 7 on: john-doe/test-repo',
         );
     });
@@ -63,9 +66,11 @@ describe('updateCommentOnIssue tests', () => {
             updateCommentOnIssue({ commentId: 7, comment: 'Updated body' }),
         ).rejects.toThrow('Network error');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to update comment 7 on: john-doe/test-repo',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

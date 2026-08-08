@@ -1,7 +1,6 @@
-import * as core from '@actions/core';
-import { serializeError } from 'serialize-error';
 import { AppContext } from '../../../context/app-context';
 import type { CloseIssueInput } from '../../../types';
+import { logger } from '../../../utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const closeIssue = async (input: CloseIssueInput) => {
@@ -11,7 +10,7 @@ export const closeIssue = async (input: CloseIssueInput) => {
     } = AppContext.getInstance();
 
     try {
-        core.info(`Closing issue: ${owner}/${repo}#${issueNumber}`);
+        logger.info(`Closing issue: ${owner}/${repo}#${issueNumber}`);
 
         const client = OctokitClient.getInstance();
 
@@ -22,9 +21,11 @@ export const closeIssue = async (input: CloseIssueInput) => {
             state: 'closed',
         });
 
-        core.info(`Closed issue: ${owner}/${repo}#${issueNumber}`);
+        logger.info(`Closed issue: ${owner}/${repo}#${issueNumber}`);
     } catch (err) {
-        core.error(`Failed to close issue: ${owner}/${repo}#${issueNumber}`);
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
+        logger.error(
+            { err },
+            `Failed to close issue: ${owner}/${repo}#${issueNumber}`,
+        );
     }
 };

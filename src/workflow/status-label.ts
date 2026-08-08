@@ -1,8 +1,7 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
-import { serializeError } from 'serialize-error';
 import { AppContext } from '../context/app-context';
 import { STATUS_LABEL_PREFIX } from '../utils/constants';
+import { logger } from '../utils/logger';
 import {
     addLabelToIssue,
     getLabelsFromIssue,
@@ -29,12 +28,14 @@ const restoreStatusLabel = async (
 ): Promise<RemoveStatusResult> => {
     try {
         await addLabelToIssue({ issueNumber, label });
-        core.warning(`Restored previous status label: ${label.name}`);
+        logger.warn(`Restored previous status label: ${label.name}`);
 
         return { success: true, label };
     } catch (error) {
-        core.error(`Failed to restore previous status label: ${label.name}`);
-        core.debug(`[Error]: ${JSON.stringify(serializeError(error))}`);
+        logger.error(
+            { err: error },
+            `Failed to restore previous status label: ${label.name}`,
+        );
 
         return { success: false, label, error };
     }
@@ -55,7 +56,7 @@ export const updateStatus = async (issueNumber: number, to: Label) => {
             name.startsWith(STATUS_LABEL_PREFIX),
         );
 
-        core.info(
+        logger.info(
             fromLabels.length > 0
                 ? `Updating status: ${fromLabels
                       .map(({ name }) => name)
@@ -87,7 +88,7 @@ export const updateStatus = async (issueNumber: number, to: Label) => {
 
         await addLabelToIssue({ issueNumber, label: to });
 
-        core.info(`Updated status to ${to.name}`);
+        logger.info(`Updated status to ${to.name}`);
     } catch (err) {
         await Promise.all(
             removedLabels.map((label) =>
@@ -95,7 +96,8 @@ export const updateStatus = async (issueNumber: number, to: Label) => {
             ),
         );
 
-        core.error(
+        logger.error(
+            { err },
             fromLabels.length > 0
                 ? `Failed to update status from ${fromLabels
                       .map(({ name }) => name)
@@ -104,7 +106,6 @@ export const updateStatus = async (issueNumber: number, to: Label) => {
                       )} to ${to.name} on ${owner}/${repo}#${issueNumber}`
                 : `Failed to update status to ${to.name} on ${owner}/${repo}#${issueNumber}`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
 
         throw err;
     }

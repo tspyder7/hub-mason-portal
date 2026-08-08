@@ -1,7 +1,6 @@
-import * as core from '@actions/core';
-import { serializeError } from 'serialize-error';
 import { AppContext } from '../../../context/app-context';
 import type { LockIssueInput } from '../../../types';
+import { logger } from '../../../utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const lockIssue = async (input: LockIssueInput) => {
@@ -11,7 +10,7 @@ export const lockIssue = async (input: LockIssueInput) => {
     } = AppContext.getInstance();
 
     try {
-        core.info(`Locking issue: ${owner}/${repo}#${issueNumber}`);
+        logger.info(`Locking issue: ${owner}/${repo}#${issueNumber}`);
 
         const client = OctokitClient.getInstance();
 
@@ -22,10 +21,12 @@ export const lockIssue = async (input: LockIssueInput) => {
             lock_reason: lockReason,
         });
 
-        core.info(`Locked issue: ${owner}/${repo}#${issueNumber}`);
+        logger.info(`Locked issue: ${owner}/${repo}#${issueNumber}`);
     } catch (err) {
-        core.error(`Failed to lock issue: ${owner}/${repo}#${issueNumber}`);
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
+        logger.error(
+            { err },
+            `Failed to lock issue: ${owner}/${repo}#${issueNumber}`,
+        );
 
         throw err;
     }

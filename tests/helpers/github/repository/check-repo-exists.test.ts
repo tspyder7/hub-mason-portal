@@ -1,9 +1,9 @@
-import * as core from '@actions/core';
 import type { Repository } from '@octokit/webhooks-types';
 import { RequestError } from 'octokit';
 import { AppContext } from '../../../../src/context/app-context';
 import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
 import { checkRepoExists } from '../../../../src/helpers/github/repository';
+import { logger } from '../../../../src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({
@@ -16,10 +16,13 @@ vi.mock('../../../../src/helpers/github/events', () => ({
 
 const reposGetMock = vi.fn();
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+vi.mock('../../../../src/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+    },
 }));
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
@@ -50,10 +53,10 @@ describe('checkRepoExists tests', () => {
             checkRepoExists(repository.name, 'other-user'),
         ).resolves.toBe(true);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Checking if repository other-user/test-repo exists',
         );
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Repository other-user/test-repo exists',
         );
         expect(reposGetMock).toHaveBeenCalledWith({
@@ -65,10 +68,10 @@ describe('checkRepoExists tests', () => {
     it('should check repository exists in current user account (when owner name is not passed)', async () => {
         await expect(checkRepoExists('new-repo')).resolves.toBe(true);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Checking if repository john-doe/new-repo exists',
         );
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Repository john-doe/new-repo exists',
         );
         expect(reposGetMock).toHaveBeenCalledWith({
@@ -90,13 +93,13 @@ describe('checkRepoExists tests', () => {
 
         await expect(checkRepoExists(repository.name)).resolves.toBe(false);
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Checking if repository john-doe/test-repo exists',
         );
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Repository john-doe/test-repo does not exist',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should throw the error if the repository check fails', async () => {
@@ -112,10 +115,14 @@ describe('checkRepoExists tests', () => {
 
         await expect(checkRepoExists(repository.name)).rejects.toThrow(error);
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Insufficient Permission',
+                }),
+            }),
             'Failed to check if repository john-doe/test-repo exists',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should throw the error on any other non-request error', async () => {
@@ -125,9 +132,11 @@ describe('checkRepoExists tests', () => {
             'Network issue',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network issue' }),
+            }),
             'Failed to check if repository john-doe/test-repo exists',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

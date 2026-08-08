@@ -1,17 +1,16 @@
-import * as core from '@actions/core';
+import { logger } from '../../../utils/logger';
 import type { GithubEvent } from '../../../types';
 
 export const logEvent = (event: GithubEvent) => {
-    core.startGroup('Github Event');
-    core.info(`Event name: ${event.eventName}`);
-    core.info(`Action: ${event.action}`);
-    core.info(`Issue title: ${event.issue.title}`);
-    core.info(`Issue body: ${event.issue.body}`);
-    core.info(`Issue number: ${event.issue.number}`);
-    core.info(
+    logger.info('Github Event');
+    logger.info(`Event name: ${event.eventName}`);
+    logger.info(`Action: ${event.action}`);
+    logger.info(`Issue title: ${event.issue.title}`);
+    logger.info(`Issue body: ${event.issue.body}`);
+    logger.info(`Issue number: ${event.issue.number}`);
+    logger.info(
         `Issue labels: ${(event.issue.labels?.map(({ name }) => name) ?? []).join(', ')}`,
     );
-    core.info(`Workflow: ${event.workflow}`);
-    core.info(`Run ID: ${event.runId}`);
-    core.endGroup();
+    logger.info(`Workflow: ${event.workflow}`);
+    logger.info(`Run ID: ${event.runId}`);
 };
