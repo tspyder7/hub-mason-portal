@@ -9,7 +9,9 @@ export const removeLabelFromIssue = async (
     input: RemoveLabelFromIssueInput,
 ) => {
     const { issueNumber, label } = input;
-    const { repo, owner } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(

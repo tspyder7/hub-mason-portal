@@ -5,7 +5,9 @@ import { AppContext } from '../../../context/app-context';
 import { OctokitClient } from '../client/octokit-client';
 
 export const getLabelsFromRepo = async (): Promise<Label[]> => {
-    const { owner, repo } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(`Fetching labels from ${owner}/${repo}`);

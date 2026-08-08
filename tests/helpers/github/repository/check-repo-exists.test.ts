@@ -6,7 +6,9 @@ import { OctokitClient } from '../../../../src/helpers/github/client/octokit-cli
 import { checkRepoExists } from '../../../../src/helpers/github/repository';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
-const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
+const { getEventMock } = vi.hoisted(() => ({
+    getEventMock: vi.fn(),
+}));
 
 vi.mock('../../../../src/helpers/github/events', () => ({
     getEvent: getEventMock,
@@ -44,21 +46,23 @@ describe('checkRepoExists tests', () => {
     });
 
     it('should return true when repository exists', async () => {
-        await expect(checkRepoExists()).resolves.toBe(true);
+        await expect(
+            checkRepoExists(repository.name, 'other-user'),
+        ).resolves.toBe(true);
 
         expect(core.info).toHaveBeenCalledWith(
-            'Checking if repository john-doe/test-repo exists',
+            'Checking if repository other-user/test-repo exists',
         );
         expect(core.info).toHaveBeenCalledWith(
-            'Repository john-doe/test-repo exists',
+            'Repository other-user/test-repo exists',
         );
         expect(reposGetMock).toHaveBeenCalledWith({
-            owner: 'john-doe',
+            owner: 'other-user',
             repo: 'test-repo',
         });
     });
 
-    it('should check a requested repository name when provided', async () => {
+    it('should check repository exists in current user account (when owner name is not passed)', async () => {
         await expect(checkRepoExists('new-repo')).resolves.toBe(true);
 
         expect(core.info).toHaveBeenCalledWith(
@@ -84,7 +88,7 @@ describe('checkRepoExists tests', () => {
 
         reposGetMock.mockRejectedValue(error);
 
-        await expect(checkRepoExists()).resolves.toBe(false);
+        await expect(checkRepoExists(repository.name)).resolves.toBe(false);
 
         expect(core.info).toHaveBeenCalledWith(
             'Checking if repository john-doe/test-repo exists',
@@ -106,7 +110,7 @@ describe('checkRepoExists tests', () => {
 
         reposGetMock.mockRejectedValue(error);
 
-        await expect(checkRepoExists()).rejects.toThrow(error);
+        await expect(checkRepoExists(repository.name)).rejects.toThrow(error);
 
         expect(core.error).toHaveBeenCalledWith(
             'Failed to check if repository john-doe/test-repo exists',
@@ -117,7 +121,9 @@ describe('checkRepoExists tests', () => {
     it('should throw the error on any other non-request error', async () => {
         reposGetMock.mockRejectedValue(new Error('Network issue'));
 
-        await expect(checkRepoExists()).rejects.toThrow('Network issue');
+        await expect(checkRepoExists(repository.name)).rejects.toThrow(
+            'Network issue',
+        );
 
         expect(core.error).toHaveBeenCalledWith(
             'Failed to check if repository john-doe/test-repo exists',

@@ -22,9 +22,9 @@ export const validateRequest = async (
         throw new Error(errorMessage);
     }
 
-    const exists = await checkRepoExists(parsed.data.name);
+    const isRepoExists = await checkRepoExists(parsed.data.name);
 
-    if (exists) {
+    if (isRepoExists) {
         core.error(`Repository ${parsed.data.name} already exists`);
         throw new Error(`Repository ${parsed.data.name} already exists`);
     }

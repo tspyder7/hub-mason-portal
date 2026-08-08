@@ -1,7 +1,7 @@
 import { getEvent } from '../helpers/github/events';
 import type { GithubInfo, IssueInfo, RequestInfo } from '../types';
 import type { Step, StepDefinition, StepError } from '../types/step';
-import { StepStatus, type IssueTypeName } from '../utils/constants';
+import { StepStatus } from '../utils/constants';
 
 export class AppContext {
     private static instance: AppContext | undefined;
@@ -15,22 +15,21 @@ export class AppContext {
     private _runError: StepError | null = null;
 
     private constructor() {
-        const event = getEvent();
+        const {
+            issue,
+            repo: { repo, owner },
+            ...rest
+        } = getEvent();
 
         this.github = {
-            owner: event.repo.owner,
-            repo: event.repo.repo,
-            eventName: event.eventName,
-            action: event.action,
-            runId: event.runId,
-            actor: event.actor,
-            workflow: event.workflow,
-            requestId: event.requestId,
+            repo,
+            owner,
+            ...rest,
         };
 
         this.issue = {
-            number: event.issue.number,
-            labels: event.issue.labels?.map(({ name }) => name) ?? [],
+            number: issue.number,
+            labels: issue.labels?.map(({ name }) => name) ?? [],
         };
     }
 
@@ -62,12 +61,8 @@ export class AppContext {
         return this._runError;
     }
 
-    setRequest(
-        type: IssueTypeName,
-        requestId: string,
-        payload: Record<string, unknown>,
-    ): void {
-        this._request = { type, requestId, payload };
+    setRequest(request: RequestInfo): void {
+        this._request = request;
     }
 
     setStatusCommentId(commentId: number): void {

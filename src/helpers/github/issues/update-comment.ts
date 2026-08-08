@@ -8,7 +8,9 @@ export const updateCommentOnIssue = async (
     input: UpdateCommentOnIssueInput,
 ): Promise<void> => {
     const { commentId, comment } = input;
-    const { repo, owner } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(`Updating comment ${commentId} on: ${owner}/${repo}`);

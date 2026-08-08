@@ -6,7 +6,9 @@ import { OctokitClient } from '../client/octokit-client';
 
 export const closeIssue = async (input: CloseIssueInput) => {
     const { issueNumber } = input;
-    const { repo, owner } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(`Closing issue: ${owner}/${repo}#${issueNumber}`);

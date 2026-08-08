@@ -26,7 +26,11 @@ describe('renderStatusComment', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         context = AppContext.getInstance();
-        context.setRequest('repository/provision-repository', 'R-1', {});
+        context.setRequest({
+            type: 'repository/provision-repository',
+            requestId: 'R-1',
+            payload: {},
+        });
     });
 
     it('should render header with request type and request id', () => {
@@ -199,7 +203,11 @@ describe('renderSummary', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         context = AppContext.getInstance();
-        context.setRequest('repository/provision-repository', 'R-1', {});
+        context.setRequest({
+            type: 'repository/provision-repository',
+            requestId: 'R-1',
+            payload: {},
+        });
     });
 
     it('should render request type, id and completed status when nothing failed', () => {

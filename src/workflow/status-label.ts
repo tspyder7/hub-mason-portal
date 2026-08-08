@@ -41,7 +41,9 @@ const restoreStatusLabel = async (
 };
 
 export const updateStatus = async (issueNumber: number, to: Label) => {
-    const { owner, repo } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     let fromLabels: Label[] = [];
     let removedLabels: Label[] = [];
@@ -72,15 +74,15 @@ export const updateStatus = async (issueNumber: number, to: Label) => {
             )
             .map(({ label }) => label);
 
-        const failedRemoval = removeStatusResult.find(
+        const removeStatusFailure = removeStatusResult.find(
             (
                 result,
             ): result is { success: false; label: Label; error: unknown } =>
                 !result.success,
         );
 
-        if (failedRemoval) {
-            throw failedRemoval.error;
+        if (removeStatusFailure) {
+            throw removeStatusFailure.error;
         }
 
         await addLabelToIssue({ issueNumber, label: to });

@@ -7,7 +7,9 @@ import { createLabelInRepo } from '../repository/create-label';
 
 export const addLabelToIssue = async (input: AddLabelToIssueInput) => {
     const { issueNumber, label } = input;
-    const { repo, owner } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(

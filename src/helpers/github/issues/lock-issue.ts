@@ -6,7 +6,9 @@ import { OctokitClient } from '../client/octokit-client';
 
 export const lockIssue = async (input: LockIssueInput) => {
     const { issueNumber, lockReason = 'resolved' } = input;
-    const { repo, owner } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(`Locking issue: ${owner}/${repo}#${issueNumber}`);

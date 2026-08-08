@@ -23,11 +23,11 @@ export const handle = async (event: GithubEvent) => {
 
     const request = parseIssue<ProvisionRepositoryRequest>(issueBody);
 
-    AppContext.getInstance().setRequest(
-        IssueType.PROVISION_REPOSITORY,
-        event.requestId,
-        request as unknown as Record<string, unknown>,
-    );
+    AppContext.getInstance().setRequest({
+        type: IssueType.PROVISION_REPOSITORY,
+        requestId: event.requestId,
+        payload: request as unknown as Record<string, unknown>,
+    });
 
     core.info(`Handling issue #${issueNumber}`);
     core.info(`ProvisionRepositoryRequest: ${JSON.stringify(request)}`);

@@ -68,8 +68,12 @@ describe('AppContext', () => {
     it('should set the request', () => {
         const instance = AppContext.getInstance();
 
-        instance.setRequest('repository/provision-repository', 'R-1', {
-            repoName: 'new-repo',
+        instance.setRequest({
+            type: 'repository/provision-repository',
+            requestId: 'R-1',
+            payload: {
+                repoName: 'new-repo',
+            },
         });
 
         expect(instance.request).toEqual({

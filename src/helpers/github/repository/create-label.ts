@@ -6,14 +6,16 @@ import { OctokitClient } from '../client/octokit-client';
 import { getLabelsFromRepo } from './get-labels';
 
 export const createLabelInRepo = async (label: Label) => {
-    const { owner, repo } = AppContext.getInstance().github;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         const labels = await getLabelsFromRepo();
 
-        const labelExists = !!labels.find(({ name }) => name === label.name);
+        const isLabelExists = !!labels.find(({ name }) => name === label.name);
 
-        if (labelExists) {
+        if (isLabelExists) {
             core.info('Label already exists, skipping label creation');
             return;
         }

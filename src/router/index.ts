@@ -36,7 +36,7 @@ export const routeEvent = async (event: GithubEvent) => {
             throw new Error('Multiple requests in given issue');
         }
 
-        if (requests.length === 0) {
+        if (!requests.length) {
             core.error(`No request found in given issue: ${requests}`);
             throw new Error('No request found in given issue');
         }
@@ -46,12 +46,18 @@ export const routeEvent = async (event: GithubEvent) => {
         const type = requests[0]!;
 
         AppContext.getInstance().seedSteps(
-            (await import(`../handlers/${type}/steps`)).STEPS,
+            (
+                await import(
+                    /* @vite-ignore */
+                    `../handlers/${type}/steps`
+                )
+            ).STEPS,
         );
 
         await upsertStatusComment();
 
         const handler = (await import(
+            /* @vite-ignore */
             `../handlers/${type}/handler`
         )) as Handler;
 

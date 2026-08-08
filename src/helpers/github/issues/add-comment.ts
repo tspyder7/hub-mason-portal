@@ -7,26 +7,28 @@ import { OctokitClient } from '../client/octokit-client';
 export const addCommentToIssue = async (
     input: AddCommentToIssueInput,
 ): Promise<number> => {
-    const { issueNumber, comment = '' } = input;
-    const { repo, owner } = AppContext.getInstance().github;
+    const { issueNumber, comment: commentBody = '' } = input;
+    const {
+        github: { repo, owner },
+    } = AppContext.getInstance();
 
     try {
         core.info(`Posting comment to: ${owner}/${repo}#${issueNumber}`);
 
         const client = OctokitClient.getInstance();
 
-        const { data } = await client.rest.issues.createComment({
+        const { data: comment } = await client.rest.issues.createComment({
             issue_number: issueNumber,
-            body: comment,
+            body: commentBody,
             owner,
             repo,
         });
 
         core.info(
-            `Posted comment successfully to: ${owner}/${repo}#${issueNumber} (comment id: ${data.id})`,
+            `Posted comment successfully to: ${owner}/${repo}#${issueNumber} (comment id: ${comment.id})`,
         );
 
-        return data.id;
+        return comment.id;
     } catch (err) {
         core.error(
             `Failed to post comment to: ${owner}/${repo}#${issueNumber}`,
