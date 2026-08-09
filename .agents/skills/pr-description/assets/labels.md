@@ -7,7 +7,8 @@ Use only these labels when proposing labels for a PR. One `type:*`, one `status:
 | Label              | Use when the PR...                                                        |
 | ------------------ | ------------------------------------------------------------------------- |
 | `type:feature`     | Adds a new feature or capability                                          |
-| `type:bug`         | Fixes a bug / unexpected behavior                                         |
+| `type:bug`         | A bug / unexpected behavior                                         |
+| `type:fix`         | Fixes a bug / unexpected behavior                                         |
 | `type:hotfix`      | Fixes a critical bug urgently (patch to production)                       |
 | `type:enhancement` | Improves an existing feature without adding new capability                |
 | `type:refactor`    | Restructures code with no behavior change                                 |
