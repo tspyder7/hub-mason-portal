@@ -1,6 +1,10 @@
 import type { Label } from '@octokit/webhooks-types';
 import { AppContext } from '@/src/context/app-context';
-import { closeIssue, lockIssue } from '@/src/helpers/github/issues';
+import {
+    assignIssueToUser,
+    closeIssue,
+    lockIssue,
+} from '@/src/helpers/github/issues';
 import { routeEvent } from '@/src/router';
 import { logger } from '@/src/utils/logger';
 import { postSummaryComment } from '@/src/workflow/summary-comment';
@@ -42,6 +46,7 @@ vi.mock('@/src/handlers/repository/provision-repository/handler', () => ({
 }));
 
 vi.mock('@/src/helpers/github/issues', () => ({
+    assignIssueToUser: vi.fn(),
     closeIssue: vi.fn(),
     lockIssue: vi.fn(),
 }));
@@ -75,6 +80,7 @@ describe('router tests', () => {
         vi.mocked(updateStatus).mockResolvedValue(undefined);
         vi.mocked(upsertStatusComment).mockResolvedValue(undefined);
         vi.mocked(lockIssue).mockResolvedValue(undefined);
+        vi.mocked(assignIssueToUser).mockResolvedValue(undefined);
         vi.mocked(closeIssue).mockResolvedValue(undefined);
         vi.mocked(failActiveStep).mockResolvedValue(undefined);
         vi.mocked(cancelPendingSteps).mockReturnValue(undefined);
@@ -91,6 +97,10 @@ describe('router tests', () => {
             name: 'status:opened',
         });
         expect(lockIssue).toHaveBeenCalledWith({ issueNumber: 1 });
+        expect(assignIssueToUser).toHaveBeenCalledWith({
+            issueNumber: 1,
+            assignee: ['john-doe'],
+        });
         expect(updateStatus).toHaveBeenNthCalledWith(2, 1, {
             name: 'status:initiated',
         });
@@ -226,6 +236,24 @@ describe('router tests', () => {
         expect(upsertStatusComment).toHaveBeenCalledTimes(1);
         expect(AppContext.getInstance().runError).toEqual({
             message: 'lock failed',
+        });
+        expect(postSummaryComment).toHaveBeenCalled();
+    });
+
+    it('should report the error when assigning the issue fails', async () => {
+        const event = createGithubEvent();
+        const error = new Error('assign failed');
+        vi.mocked(assignIssueToUser).mockRejectedValueOnce(error);
+
+        await routeEvent(event);
+
+        expect(failActiveStep).toHaveBeenCalledWith(error);
+        expect(updateStatus).toHaveBeenCalledWith(1, {
+            name: 'status:failed',
+        });
+        expect(upsertStatusComment).toHaveBeenCalledTimes(1);
+        expect(AppContext.getInstance().runError).toEqual({
+            message: 'assign failed',
         });
         expect(postSummaryComment).toHaveBeenCalled();
     });
