@@ -13,7 +13,7 @@ export type Handler = {
 export type RemoveLabelResponse =
     RestEndpointMethodTypes['issues']['removeLabel']['response'];
 
-type IssueLockReason =
+export type IssueLockReason =
     RestEndpointMethodTypes['issues']['lock']['parameters']['lock_reason'];
 
 export type RemoveStatusResult =
@@ -35,6 +35,11 @@ export interface GithubEvent {
     runId: number;
     actor: string;
     requestId: string;
+}
+
+export interface IssueLockState {
+    locked: boolean;
+    activeLockReason: string | null;
 }
 
 export interface AddCommentToIssueInput {
@@ -65,6 +70,10 @@ export interface RemoveLabelFromIssueInput {
 export interface LockIssueInput {
     issueNumber: number;
     lockReason?: IssueLockReason;
+}
+
+export interface UnlockIssueInput {
+    issueNumber: number;
 }
 
 export interface CloseIssueInput {
