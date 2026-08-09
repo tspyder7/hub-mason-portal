@@ -9,6 +9,9 @@ export const createGithubEvent = (): GithubEvent =>
             title: 'Test issue',
             body: 'issue body',
             labels: [{ name: 'repository/provision-repository' }],
+            user: {
+                login: 'john-doe',
+            },
         },
         repo: {
             owner: 'john-doe',

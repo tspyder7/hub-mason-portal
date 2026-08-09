@@ -1,5 +1,6 @@
 export * from './add-comment';
 export * from './add-label';
+export * from './assign-issue';
 export * from './close-issue';
 export * from './get-labels';
 export * from './lock-issue';
