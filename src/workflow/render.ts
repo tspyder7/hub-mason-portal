@@ -6,6 +6,7 @@ import {
     code,
     heading,
     inlineCode,
+    link,
     paragraph,
     strong,
     table,
@@ -40,6 +41,15 @@ const renderFailedStep = (step: Step): Array<Paragraph | Blockquote | Code> => [
     ...(step.error?.stack ? [code(step.error.stack)] : []),
 ];
 
+const renderWorkflowRun = (context: AppContext): Paragraph =>
+    paragraph([
+        text('Workflow run: '),
+        link(
+            `https://github.com/${context.github.owner}/${context.github.repo}/actions/runs/${context.github.runId}`,
+            context.github.workflow,
+        ),
+    ]);
+
 export const renderStatusComment = (context: AppContext): string => {
     const failedSteps = context.steps.filter(
         ({ status }) => status === StepStatus.FAILED,
@@ -52,6 +62,7 @@ export const renderStatusComment = (context: AppContext): string => {
             text('Request-Id: '),
             inlineCode(context.request?.requestId ?? '-'),
         ]),
+        renderWorkflowRun(context),
     ];
 
     if (context.steps.length > 0 || failedSteps.length > 0) {
@@ -101,6 +112,7 @@ export const renderSummary = (context: AppContext): string => {
             inlineCode(context.request?.requestId ?? '-'),
         ]),
         paragraph([text('Status: '), strong(status)]),
+        renderWorkflowRun(context),
     ];
 
     if (failed) {
