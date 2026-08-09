@@ -47,6 +47,14 @@ describe('renderStatusComment', () => {
         expect(body).toContain('Request-Id: `R-1`');
     });
 
+    it('should render a link to the workflow run', () => {
+        const body = renderStatusComment(context);
+
+        expect(body).toContain(
+            'Workflow run: [test-workflow](https://github.com/john-doe/test-repo/actions/runs/123)',
+        );
+    });
+
     it('should render header with fallbacks when request is not set', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
@@ -237,6 +245,16 @@ describe('renderSummary', () => {
         expect(body).toContain('Request-Id: `R-1`');
         expect(body).toContain('Status: **COMPLETED**');
         expect(body).not.toContain('### Error');
+    });
+
+    it('should render a link to the workflow run', () => {
+        context.setSteps([createStep({ status: StepStatus.COMPLETED })]);
+
+        const body = renderSummary(context);
+
+        expect(body).toContain(
+            'Workflow run: [test-workflow](https://github.com/john-doe/test-repo/actions/runs/123)',
+        );
     });
 
     it('should render completed status when a cancelled step remains', () => {
