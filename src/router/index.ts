@@ -1,7 +1,11 @@
 import intersection from 'lodash/intersection';
 import values from 'lodash/values';
 import { AppContext } from '../context/app-context';
-import { closeIssue, lockIssue } from '../helpers/github/issues';
+import {
+    assignIssueToUser,
+    closeIssue,
+    lockIssue,
+} from '../helpers/github/issues';
 import type { GithubEvent, Handler } from '../types';
 import { IssueType, StatusLabel } from '../utils/constants';
 import { logger } from '../utils/logger';
@@ -19,11 +23,18 @@ export const routeEvent = async (event: GithubEvent) => {
         issue: { labels: issueLabels },
     } = event;
 
-    const issueNumber = event.issue.number;
+    const {
+        number: issueNumber,
+        user: { login: issueAuthor },
+    } = event.issue;
 
     try {
         await updateStatus(issueNumber, StatusLabel.OPENED);
         await lockIssue({ issueNumber });
+        await assignIssueToUser({
+            issueNumber,
+            assignee: [issueAuthor],
+        });
 
         const requests = intersection(
             values(IssueType),

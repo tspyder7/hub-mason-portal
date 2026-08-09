@@ -47,6 +47,11 @@ export interface UpdateCommentOnIssueInput {
     comment: string;
 }
 
+export interface AssignIssueToUserInput {
+    issueNumber: number;
+    assignee: string[];
+}
+
 export interface AddLabelToIssueInput {
     issueNumber: number;
     label: Label;
