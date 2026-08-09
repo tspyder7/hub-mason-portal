@@ -97,18 +97,16 @@ Rules:
   (feature → `type:feature`, fix → `type:bug` or `type:hotfix`, etc.). If it's a
   dependency-only change use `type:dependencies`; docs-only → `type:docs`;
   tests-only → `type:test`; CI-only → `type:ci`.
-- **Status**: pick one `status:*` label. If unknown, default the suggested status to
-  `status:ready-for-review` (PR described for review) — or `status:draft` if the PR is
-  incomplete.
-- **Priority**: pick one `priority:*` label. Default `priority:medium` unless the user says
-  the change is urgent (→ `priority:high` / `priority:critical`).
+- **Status / Priority**: do NOT suggest `status:*` or `priority:*` labels unless the user
+  explicitly asks for them. If the user asks, pick one of each per the table in
+  `assets/labels.md` and ask them to confirm the values.
 - Never invent a label that isn't in `assets/labels.md`.
 
 Present the suggested labels as a single line, e.g.:
 
-`Labels: type:feature, status:ready-for-review, priority:medium`
+`Labels: type:feature`
 
-Ask the user if the labels look right; adjust on request.
+Ask the user if the type label looks right; adjust on request.
 
 ---
 
@@ -160,7 +158,7 @@ request counts per IP and returns a proper 429 response when limits are exceeded
 Closes #
 ```
 
-**Suggested labels:** `type:feature, status:ready-for-review, priority:medium`
+**Suggested labels:** `type:feature`
 
 ---
 
@@ -187,7 +185,7 @@ seeing totals off by ±$0.01 on certain order amounts.
 Closes JIRA-891
 ```
 
-**Suggested labels:** `type:bug, status:ready-for-review, priority:low`
+**Suggested labels:** `type:bug`
 
 ---
 
