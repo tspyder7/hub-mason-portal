@@ -1,10 +1,10 @@
-import { AppContext } from '../../../context/app-context';
-import { parseIssue } from '../../../parser/issue-parser';
-import type { GithubEvent } from '../../../types';
-import { IssueType, StatusLabel } from '../../../utils/constants';
-import { logger } from '../../../utils/logger';
-import { createSteps } from '../../../workflow/steps';
-import { updateStatus } from '../../../workflow/status-label';
+import { AppContext } from '@/src/context/app-context';
+import { parseIssue } from '@/src/parser/issue-parser';
+import type { GithubEvent } from '@/src/types';
+import { IssueType, StatusLabel } from '@/src/utils/constants';
+import { logger } from '@/src/utils/logger';
+import { createSteps } from '@/src/workflow/steps';
+import { updateStatus } from '@/src/workflow/status-label';
 import { STEPS, Step } from './steps';
 import type { ProvisionRepositoryRequest } from './type';
 import { validateRequest } from './request-validator';

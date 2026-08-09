@@ -1,6 +1,6 @@
-import { AppContext } from '../../../context/app-context';
-import type { UpdateCommentOnIssueInput } from '../../../types';
-import { logger } from '../../../utils/logger';
+import { AppContext } from '@/src/context/app-context';
+import type { UpdateCommentOnIssueInput } from '@/src/types';
+import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const updateCommentOnIssue = async (

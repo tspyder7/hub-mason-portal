@@ -16,7 +16,9 @@ vi.mock('pino', () => ({
     pino: pinoMock,
 }));
 
-import { logger } from '../../src/utils/logger';
+import { logger } from '@/src/utils/logger';
+
+vi.unmock('@/src/utils/logger');
 
 describe('logger tests', () => {
     it('creates a pino instance with a pino-pretty transport', () => {

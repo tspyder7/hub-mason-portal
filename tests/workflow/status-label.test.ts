@@ -1,34 +1,25 @@
 import type { Label } from '@octokit/webhooks-types';
-import { AppContext } from '../../src/context/app-context';
+import { AppContext } from '@/src/context/app-context';
 import {
     addLabelToIssue,
     getLabelsFromIssue,
     removeLabelFromIssue,
-} from '../../src/helpers/github/issues';
-import { StatusLabel } from '../../src/utils/constants';
-import { logger } from '../../src/utils/logger';
-import { updateStatus } from '../../src/workflow/status-label';
+} from '@/src/helpers/github/issues';
+import { StatusLabel } from '@/src/utils/constants';
+import { logger } from '@/src/utils/logger';
+import { updateStatus } from '@/src/workflow/status-label';
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('../../src/helpers/github/issues', () => ({
+vi.mock('@/src/helpers/github/issues', () => ({
     addLabelToIssue: vi.fn(),
     getLabelsFromIssue: vi.fn(),
     removeLabelFromIssue: vi.fn(),
-}));
-
-vi.mock('../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
 }));
 
 const requestLabel = {

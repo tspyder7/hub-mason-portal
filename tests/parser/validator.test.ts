@@ -1,8 +1,8 @@
-import type { GithubEvent } from '../../src/types';
+import type { GithubEvent } from '@/src/types';
 import type { Label } from '@octokit/webhooks-types';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@/src/utils/logger';
 
-vi.mock('../../src/utils/constants', async (importOriginal) => {
+vi.mock('@/src/utils/constants', async (importOriginal) => {
     const actualModule =
         await importOriginal<typeof import('../../src/utils/constants')>();
 
@@ -15,16 +15,7 @@ vi.mock('../../src/utils/constants', async (importOriginal) => {
     };
 });
 
-import { validateEvent } from '../../src/parser/validator';
-
-vi.mock('../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
-}));
+import { validateEvent } from '@/src/parser/validator';
 
 describe('validateEvent tests', () => {
     beforeEach(() => {

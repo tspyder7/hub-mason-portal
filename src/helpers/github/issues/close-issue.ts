@@ -1,6 +1,6 @@
-import { AppContext } from '../../../context/app-context';
-import type { CloseIssueInput } from '../../../types';
-import { logger } from '../../../utils/logger';
+import { AppContext } from '@/src/context/app-context';
+import type { CloseIssueInput } from '@/src/types';
+import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const closeIssue = async (input: CloseIssueInput) => {

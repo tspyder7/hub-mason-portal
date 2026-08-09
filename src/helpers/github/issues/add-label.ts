@@ -1,6 +1,6 @@
-import { AppContext } from '../../../context/app-context';
-import type { AddLabelToIssueInput } from '../../../types';
-import { logger } from '../../../utils/logger';
+import { AppContext } from '@/src/context/app-context';
+import type { AddLabelToIssueInput } from '@/src/types';
+import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 import { createLabelInRepo } from '../repository/create-label';
 

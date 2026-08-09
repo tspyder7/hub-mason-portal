@@ -1,5 +1,5 @@
-import { checkRepoExists } from '../../../helpers/github/repository';
-import { logger } from '../../../utils/logger';
+import { checkRepoExists } from '@/src/helpers/github/repository';
+import { logger } from '@/src/utils/logger';
 import { z } from 'zod';
 import type { ProvisionRepositoryRequest } from './type';
 

@@ -1,8 +1,8 @@
 import { RequestError } from 'octokit';
-import type { RemoveLabelFromIssueInput } from '../../../types';
-import { AppContext } from '../../../context/app-context';
+import type { RemoveLabelFromIssueInput } from '@/src/types';
+import { AppContext } from '@/src/context/app-context';
 import { OctokitClient } from '../client';
-import { logger } from '../../../utils/logger';
+import { logger } from '@/src/utils/logger';
 
 export const removeLabelFromIssue = async (
     input: RemoveLabelFromIssueInput,

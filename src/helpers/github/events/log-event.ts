@@ -1,5 +1,5 @@
-import { logger } from '../../../utils/logger';
-import type { GithubEvent } from '../../../types';
+import { logger } from '@/src/utils/logger';
+import type { GithubEvent } from '@/src/types';
 
 export const logEvent = (event: GithubEvent) => {
     logger.info('Github Event');

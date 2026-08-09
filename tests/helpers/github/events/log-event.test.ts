@@ -1,16 +1,7 @@
 import type { Issue, Label, PullRequest } from '@octokit/webhooks-types';
-import { logEvent } from '../../../../src/helpers/github/events';
-import { logger } from '../../../../src/utils/logger';
-import type { GithubEvent } from '../../../../src/types';
-
-vi.mock('../../../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
-}));
+import { logEvent } from '@/src/helpers/github/events';
+import { logger } from '@/src/utils/logger';
+import type { GithubEvent } from '@/src/types';
 
 describe('logEvent tests', () => {
     let event: GithubEvent;

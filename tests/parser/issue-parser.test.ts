@@ -1,17 +1,8 @@
 import { readFileSync } from 'fs';
-import { parseIssue } from '../../src/parser/issue-parser';
-import { logger } from '../../src/utils/logger';
+import { parseIssue } from '@/src/parser/issue-parser';
+import { logger } from '@/src/utils/logger';
 
 vi.mock('fs');
-
-vi.mock('../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
-}));
 
 const issueBody = `
 <!-- template-id: test-request.yml -->

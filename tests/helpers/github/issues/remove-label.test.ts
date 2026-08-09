@@ -1,28 +1,19 @@
-import { AppContext } from '../../../../src/context/app-context';
-import { OctokitClient } from '../../../../src/helpers/github/client/';
-import { removeLabelFromIssue } from '../../../../src/helpers/github/issues/remove-label';
-import { logger } from '../../../../src/utils/logger';
-import type { RemoveLabelResponse } from '../../../../src/types';
+import { AppContext } from '@/src/context/app-context';
+import { OctokitClient } from '@/src/helpers/github/client/';
+import { removeLabelFromIssue } from '@/src/helpers/github/issues/remove-label';
+import { logger } from '@/src/utils/logger';
+import type { RemoveLabelResponse } from '@/src/types';
 import { RequestError } from 'octokit';
 import type { Label } from '@octokit/webhooks-types';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
 const removeLabelMock = vi.fn();
-
-vi.mock('../../../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
-}));
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
     rest: {

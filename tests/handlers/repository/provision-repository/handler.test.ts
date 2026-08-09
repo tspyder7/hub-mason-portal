@@ -1,11 +1,11 @@
-import { AppContext } from '../../../../src/context/app-context';
-import { handle } from '../../../../src/handlers/repository/provision-repository/handler';
-import { parseIssue } from '../../../../src/parser/issue-parser';
-import type { GithubEvent } from '../../../../src/types';
-import { StatusLabel } from '../../../../src/utils/constants';
-import { logger } from '../../../../src/utils/logger';
-import { validateRequest } from '../../../../src/handlers/repository/provision-repository/request-validator';
-import { updateStatus } from '../../../../src/workflow/status-label';
+import { AppContext } from '@/src/context/app-context';
+import { handle } from '@/src/handlers/repository/provision-repository/handler';
+import { parseIssue } from '@/src/parser/issue-parser';
+import type { GithubEvent } from '@/src/types';
+import { StatusLabel } from '@/src/utils/constants';
+import { logger } from '@/src/utils/logger';
+import { validateRequest } from '@/src/handlers/repository/provision-repository/request-validator';
+import { updateStatus } from '@/src/workflow/status-label';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -15,35 +15,26 @@ const { beginStep, finishStep } = vi.hoisted(() => ({
     finishStep: vi.fn(),
 }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('../../../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
-}));
-
-vi.mock('../../../../src/parser/issue-parser', () => ({
+vi.mock('@/src/parser/issue-parser', () => ({
     parseIssue: vi.fn(),
 }));
 
 vi.mock(
-    '../../../../src/handlers/repository/provision-repository/request-validator',
+    '@/src/handlers/repository/provision-repository/request-validator',
     () => ({
         validateRequest: vi.fn(),
     }),
 );
 
-vi.mock('../../../../src/workflow/steps', () => ({
+vi.mock('@/src/workflow/steps', () => ({
     createSteps: vi.fn(() => ({ beginStep, finishStep })),
 }));
 
-vi.mock('../../../../src/workflow/status-label', () => ({
+vi.mock('@/src/workflow/status-label', () => ({
     updateStatus: vi.fn(),
 }));
 

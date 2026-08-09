@@ -8,6 +8,11 @@
         "moduleDetection": "force",
         "allowJs": false,
         "moduleResolution": "bundler",
+        "paths": {
+            "@/*": [
+                "./*"
+            ]
+        },
         "allowImportingTsExtensions": true,
         "verbatimModuleSyntax": true,
         "noEmit": true,

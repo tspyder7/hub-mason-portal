@@ -1,6 +1,6 @@
 import type { Label } from '@octokit/webhooks-types';
-import { AppContext } from '../../../context/app-context';
-import { logger } from '../../../utils/logger';
+import { AppContext } from '@/src/context/app-context';
+import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const getLabelsFromRepo = async (): Promise<Label[]> => {

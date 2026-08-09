@@ -1,29 +1,20 @@
 import type { Label } from '@octokit/webhooks-types';
-import { AppContext } from '../../../../src/context/app-context';
-import { createLabelInRepo } from '../../../../src/helpers/github/repository';
-import { getLabelsFromRepo } from '../../../../src/helpers/github/repository/get-labels';
-import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
-import { logger } from '../../../../src/utils/logger';
+import { AppContext } from '@/src/context/app-context';
+import { createLabelInRepo } from '@/src/helpers/github/repository';
+import { getLabelsFromRepo } from '@/src/helpers/github/repository/get-labels';
+import { OctokitClient } from '@/src/helpers/github/client/octokit-client';
+import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
 const githubCreateLabelMock = vi.fn();
 
-vi.mock('../../../../src/helpers/github/repository/get-labels');
-
-vi.mock('../../../../src/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-    },
-}));
+vi.mock('@/src/helpers/github/repository/get-labels');
 
 vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
     rest: {
