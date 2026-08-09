@@ -1,11 +1,7 @@
 import { AppContext } from '@/src/context/app-context';
 import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
-
-export interface IssueLockState {
-    locked: boolean;
-    activeLockReason: string | null;
-}
+import type { IssueLockState } from '@/src/types';
 
 export const getIssueLockState = async (
     issueNumber: number,

@@ -37,6 +37,11 @@ export interface GithubEvent {
     requestId: string;
 }
 
+export interface IssueLockState {
+    locked: boolean;
+    activeLockReason: string | null;
+}
+
 export interface AddCommentToIssueInput {
     issueNumber: number;
     comment: string;
