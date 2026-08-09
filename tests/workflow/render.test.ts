@@ -19,6 +19,13 @@ const createStep = (overrides: Partial<Step> = {}): Step => ({
     ...overrides,
 });
 
+const createFailedStep = (): Step =>
+    createStep({
+        id: 'step-failed',
+        name: 'Failed step',
+        status: StepStatus.FAILED,
+    });
+
 describe('renderStatusComment', () => {
     let context: AppContext;
 
@@ -51,12 +58,28 @@ describe('renderStatusComment', () => {
         expect(body).toContain('Request-Id: `-`');
     });
 
-    it('should render the steps table with a header row', () => {
-        context.setSteps([createStep()]);
+    it('should render the steps table with a header row when steps exist', () => {
+        context.setSteps([createStep({ status: StepStatus.COMPLETED })]);
 
         const body = renderStatusComment(context);
 
         expect(body).toContain('| Step | Status | Details |');
+        expect(body).toContain('| Step one | ✅ | - |');
+    });
+
+    it('should render the steps table when a step failed', () => {
+        context.setSteps([createFailedStep()]);
+
+        const body = renderStatusComment(context);
+
+        expect(body).toContain('| Step | Status | Details |');
+        expect(body).toContain('| Failed step | ❌ | - |');
+    });
+
+    it('should not render the steps table when there are no steps', () => {
+        const body = renderStatusComment(context);
+
+        expect(body).not.toContain('| Step |');
     });
 
     it('should render pending steps with the pending emoji', () => {
@@ -64,7 +87,7 @@ describe('renderStatusComment', () => {
 
         const body = renderStatusComment(context);
 
-        expect(body).toContain('| Step one | ⏳ pending | - |');
+        expect(body).toContain('| Step one | ⏳ | - |');
     });
 
     it('should render in-progress steps with the in-progress emoji', () => {
@@ -72,7 +95,7 @@ describe('renderStatusComment', () => {
 
         const body = renderStatusComment(context);
 
-        expect(body).toContain('| Step one | 🔄 in-progress | - |');
+        expect(body).toContain('| Step one | 🔄 | - |');
     });
 
     it('should render completed steps with the completed emoji', () => {
@@ -80,15 +103,7 @@ describe('renderStatusComment', () => {
 
         const body = renderStatusComment(context);
 
-        expect(body).toContain('| Step one | ✅ completed | - |');
-    });
-
-    it('should render failed steps with the failed emoji', () => {
-        context.setSteps([createStep({ status: StepStatus.FAILED })]);
-
-        const body = renderStatusComment(context);
-
-        expect(body).toContain('| Step one | ❌ failed | - |');
+        expect(body).toContain('| Step one | ✅ | - |');
     });
 
     it('should render cancelled steps with the cancelled emoji', () => {
@@ -96,7 +111,7 @@ describe('renderStatusComment', () => {
 
         const body = renderStatusComment(context);
 
-        expect(body).toContain('| Step one | 🚫 cancelled | - |');
+        expect(body).toContain('| Step one | 🚫 | - |');
     });
 
     it('should render step details joined in the details column', () => {
@@ -110,7 +125,7 @@ describe('renderStatusComment', () => {
         const body = renderStatusComment(context);
 
         expect(body).toContain(
-            '| Step one | ✅ completed | Template matched, Payload validated |',
+            '| Step one | ✅ | Template matched, Payload validated |',
         );
     });
 
@@ -171,7 +186,7 @@ describe('renderStatusComment', () => {
         expect(body).not.toContain('```');
     });
 
-    it('should prefer failed step details over the run error', () => {
+    it('should render failed step and run error sections separately', () => {
         context.setSteps([
             createStep({
                 status: StepStatus.FAILED,
@@ -184,7 +199,7 @@ describe('renderStatusComment', () => {
 
         expect(body).toContain('Failed at step: **Step one**');
         expect(body).toContain('> step boom');
-        expect(body).not.toContain('> run boom');
+        expect(body).toContain('> run boom');
     });
 
     it('should not render an error section when everything succeeded', () => {
