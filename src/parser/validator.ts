@@ -1,6 +1,6 @@
 import some from 'lodash/some';
-import * as core from '@actions/core';
 import { ActionType, EventType, IssueType } from '../utils/constants';
+import { logger } from '../utils/logger';
 import type { GithubEvent } from '../types';
 
 export const validateEvent = (event: GithubEvent) => {
@@ -11,7 +11,7 @@ export const validateEvent = (event: GithubEvent) => {
     } = event;
 
     if (eventName !== EventType.ISSUES || action !== ActionType.OPENED) {
-        core.warning(`Unsupported event & action: ${eventName} & ${action}`);
+        logger.warn(`Unsupported event & action: ${eventName} & ${action}`);
         throw new Error('Unsupported GitHubEvent');
     }
 
@@ -20,7 +20,7 @@ export const validateEvent = (event: GithubEvent) => {
     );
 
     if (!isValidIssue) {
-        core.warning(`Unsupported issue, no valid issueType is set in labels`);
+        logger.warn('Unsupported issue, no valid issueType is set in labels');
         throw new Error('Unsupported Issue');
     }
 };

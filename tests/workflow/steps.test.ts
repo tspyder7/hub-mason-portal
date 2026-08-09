@@ -1,7 +1,7 @@
-import { AppContext } from '../../src/context/app-context';
-import type { StepDefinition } from '../../src/types/step';
-import { StepStatus } from '../../src/utils/constants';
-import { upsertStatusComment } from '../../src/workflow/status-comment';
+import { AppContext } from '@/src/context/app-context';
+import type { StepDefinition } from '@/src/types/step';
+import { StepStatus } from '@/src/utils/constants';
+import { upsertStatusComment } from '@/src/workflow/status-comment';
 import {
     addStepDetails,
     beginStep,
@@ -11,16 +11,16 @@ import {
     failStep,
     finishStep,
     toStepError,
-} from '../../src/workflow/steps';
+} from '@/src/workflow/steps';
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('../../src/workflow/status-comment', () => ({
+vi.mock('@/src/workflow/status-comment', () => ({
     upsertStatusComment: vi.fn(),
 }));
 

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import * as github from '@actions/github';
 import type { Issue, PullRequest } from '@octokit/webhooks-types';
-import type { GithubEvent } from '../../../types';
+import type { GithubEvent } from '@/src/types';
 
 export const getEvent = (): GithubEvent => {
     const {

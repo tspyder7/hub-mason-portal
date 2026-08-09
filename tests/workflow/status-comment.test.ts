@@ -1,24 +1,24 @@
-import { AppContext } from '../../src/context/app-context';
+import { AppContext } from '@/src/context/app-context';
 import {
     addCommentToIssue,
     updateCommentOnIssue,
-} from '../../src/helpers/github/issues';
-import { upsertStatusComment } from '../../src/workflow/status-comment';
-import { renderStatusComment } from '../../src/workflow/render';
+} from '@/src/helpers/github/issues';
+import { upsertStatusComment } from '@/src/workflow/status-comment';
+import { renderStatusComment } from '@/src/workflow/render';
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('../../src/helpers/github/issues', () => ({
+vi.mock('@/src/helpers/github/issues', () => ({
     addCommentToIssue: vi.fn(),
     updateCommentOnIssue: vi.fn(),
 }));
 
-vi.mock('../../src/workflow/render', () => ({
+vi.mock('@/src/workflow/render', () => ({
     renderStatusComment: vi.fn(),
 }));
 

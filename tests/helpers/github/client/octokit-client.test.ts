@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
+import { OctokitClient } from '@/src/helpers/github/client/octokit-client';
 
 vi.mock('octokit', () => ({
     Octokit: vi.fn(),

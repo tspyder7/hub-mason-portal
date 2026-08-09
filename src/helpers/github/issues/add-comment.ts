@@ -1,7 +1,6 @@
-import { serializeError } from 'serialize-error';
-import * as core from '@actions/core';
-import { AppContext } from '../../../context/app-context';
-import type { AddCommentToIssueInput } from '../../../types';
+import { AppContext } from '@/src/context/app-context';
+import type { AddCommentToIssueInput } from '@/src/types';
+import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 
 export const addCommentToIssue = async (
@@ -13,7 +12,7 @@ export const addCommentToIssue = async (
     } = AppContext.getInstance();
 
     try {
-        core.info(`Posting comment to: ${owner}/${repo}#${issueNumber}`);
+        logger.info(`Posting comment to: ${owner}/${repo}#${issueNumber}`);
 
         const client = OctokitClient.getInstance();
 
@@ -24,16 +23,16 @@ export const addCommentToIssue = async (
             repo,
         });
 
-        core.info(
+        logger.info(
             `Posted comment successfully to: ${owner}/${repo}#${issueNumber} (comment id: ${comment.id})`,
         );
 
         return comment.id;
     } catch (err) {
-        core.error(
+        logger.error(
+            { err },
             `Failed to post comment to: ${owner}/${repo}#${issueNumber}`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
 
         throw err;
     }

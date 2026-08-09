@@ -1,10 +1,10 @@
-import { getEvent, logEvent } from '../src/helpers/github/events';
-import { routeEvent } from '../src/router';
+import { getEvent, logEvent } from '@/src/helpers/github/events';
+import { routeEvent } from '@/src/router';
 import { createGithubEvent } from './fixtures/github-event';
 
-vi.mock('../src/helpers/github/events');
+vi.mock('@/src/helpers/github/events');
 
-vi.mock('../src/router', () => ({
+vi.mock('@/src/router', () => ({
     routeEvent: vi.fn(),
 }));
 

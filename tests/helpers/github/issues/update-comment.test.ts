@@ -1,30 +1,18 @@
-import * as core from '@actions/core';
-import { AppContext } from '../../../../src/context/app-context';
-import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
-import { updateCommentOnIssue } from '../../../../src/helpers/github/issues';
+import { updateCommentOnIssue } from '@/src/helpers/github/issues';
+import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { AppContext } from '@/src/context/app-context';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-}));
+const updateCommentMock = vi.fn();
 
-const updateComment = vi.fn();
-
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            updateComment,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { updateComment: updateCommentMock } });
 
 describe('updateCommentOnIssue tests', () => {
     beforeEach(() => {
@@ -32,7 +20,7 @@ describe('updateCommentOnIssue tests', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
-        updateComment.mockResolvedValue({ data: { id: 7 } });
+        updateCommentMock.mockResolvedValue({ data: { id: 7 } });
     });
 
     afterAll(() => {
@@ -45,27 +33,29 @@ describe('updateCommentOnIssue tests', () => {
             comment: 'Updated body',
         });
 
-        expect(updateComment).toHaveBeenCalledWith({
+        expect(updateCommentMock).toHaveBeenCalledWith({
             owner: 'john-doe',
             repo: 'test-repo',
             comment_id: 7,
             body: 'Updated body',
         });
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Updated comment 7 on: john-doe/test-repo',
         );
     });
 
     it('should throw error if failed to update the comment', async () => {
-        updateComment.mockRejectedValueOnce(new Error('Network error'));
+        updateCommentMock.mockRejectedValueOnce(new Error('Network error'));
 
         await expect(
             updateCommentOnIssue({ commentId: 7, comment: 'Updated body' }),
         ).rejects.toThrow('Network error');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to update comment 7 on: john-doe/test-repo',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

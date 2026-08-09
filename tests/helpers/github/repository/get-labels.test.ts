@@ -1,31 +1,19 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
-import { AppContext } from '../../../../src/context/app-context';
-import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
-import { getLabelsFromRepo } from '../../../../src/helpers/github/repository';
+import { AppContext } from '@/src/context/app-context';
+import { getLabelsFromRepo } from '@/src/helpers/github/repository';
+import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-const listLabelsForRepo = vi.fn();
+const listLabelsForRepoMock = vi.fn();
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-}));
-
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            listLabelsForRepo,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { listLabelsForRepo: listLabelsForRepoMock } });
 
 const repoLabels = [{ name: 'bug' }, { name: 'test' }] as Label[];
 
@@ -35,7 +23,7 @@ describe('getLabelsFromRepo tests', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
-        listLabelsForRepo.mockResolvedValue({
+        listLabelsForRepoMock.mockResolvedValue({
             data: repoLabels,
         });
     });
@@ -47,25 +35,27 @@ describe('getLabelsFromRepo tests', () => {
     it('should get labels from the repository', async () => {
         const result = await getLabelsFromRepo();
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Fetching labels from john-doe/test-repo',
         );
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Fetched labels from john-doe/test-repo: 2',
         );
         expect(result).toStrictEqual(repoLabels);
     });
 
     it('should throw error if failed to get the labels from repository', async () => {
-        listLabelsForRepo.mockRejectedValueOnce(new Error('Network error'));
+        listLabelsForRepoMock.mockRejectedValueOnce(new Error('Network error'));
 
         await expect(getLabelsFromRepo()).rejects.toThrow('Network error');
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Fetching labels from john-doe/test-repo',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to fetch labels from john-doe/test-repo',
         );
     });

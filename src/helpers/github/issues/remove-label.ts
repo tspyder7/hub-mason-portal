@@ -1,9 +1,8 @@
-import * as core from '@actions/core';
-import type { RemoveLabelFromIssueInput } from '../../../types';
-import { AppContext } from '../../../context/app-context';
-import { OctokitClient } from '../client';
-import { serializeError } from 'serialize-error';
 import { RequestError } from 'octokit';
+import type { RemoveLabelFromIssueInput } from '@/src/types';
+import { AppContext } from '@/src/context/app-context';
+import { OctokitClient } from '../client';
+import { logger } from '@/src/utils/logger';
 
 export const removeLabelFromIssue = async (
     input: RemoveLabelFromIssueInput,
@@ -14,7 +13,7 @@ export const removeLabelFromIssue = async (
     } = AppContext.getInstance();
 
     try {
-        core.info(
+        logger.info(
             `Removing ${label.name} label from issue: ${owner}/${repo}#${issueNumber}`,
         );
 
@@ -27,24 +26,20 @@ export const removeLabelFromIssue = async (
             name: label.name,
         });
 
-        core.info(
+        logger.info(
             `Removed ${label.name} label from issue: ${owner}/${repo}#${issueNumber}`,
         );
     } catch (err) {
-        const error =
-            err instanceof RequestError
-                ? (err as RequestError)
-                : serializeError(err);
-
-        if (error.status === 404) {
-            core.info('Label not found on issue. skipping the removeLabel');
+        if (err instanceof RequestError && err.status === 404) {
+            logger.info('Label not found on issue. skipping the removeLabel');
             return;
-        } else {
-            core.error(
-                `Failed to remove ${label.name} label from issue: ${owner}/${repo}#${issueNumber}`,
-            );
-            core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
-            throw error;
         }
+
+        logger.error(
+            { err },
+            `Failed to remove ${label.name} label from issue: ${owner}/${repo}#${issueNumber}`,
+        );
+
+        throw err;
     }
 };

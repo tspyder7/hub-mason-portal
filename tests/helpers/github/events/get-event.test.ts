@@ -1,5 +1,5 @@
 import type { Issue, PullRequest } from '@octokit/webhooks-types';
-import { getEvent } from '../../../../src/helpers/github/events';
+import { getEvent } from '@/src/helpers/github/events';
 
 const { mockedContext, randomUUIDMock } = vi.hoisted(() => {
     return {

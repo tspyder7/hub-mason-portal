@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { parseIssue as parse } from '@github/issue-parser';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { logger } from '../utils/logger';
 
 export const parseIssue = <T>(issueBody: string): T => {
     const templateMatch = issueBody.match(
@@ -9,7 +9,7 @@ export const parseIssue = <T>(issueBody: string): T => {
     );
 
     if (!templateMatch) {
-        core.error('Issue body does not include template-id');
+        logger.error('Issue body does not include template-id');
         throw new Error('template-id not found in issueBody');
     }
 

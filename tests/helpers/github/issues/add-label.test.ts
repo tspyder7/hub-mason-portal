@@ -1,36 +1,24 @@
-import * as core from '@actions/core';
-import { AppContext } from '../../../../src/context/app-context';
-import { OctokitClient } from '../../../../src/helpers/github/client/octokit-client';
-import { addLabelToIssue } from '../../../../src/helpers/github/issues';
-import { createLabelInRepo } from '../../../../src/helpers/github/repository/create-label';
+import { AppContext } from '@/src/context/app-context';
+import { addLabelToIssue } from '@/src/helpers/github/issues';
+import { createLabelInRepo } from '@/src/helpers/github/repository/create-label';
+import { logger } from '@/src/utils/logger';
 import type { Label } from '@octokit/webhooks-types';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('../../../../src/helpers/github/repository/create-label', () => ({
+vi.mock('@/src/helpers/github/repository/create-label', () => ({
     createLabelInRepo: vi.fn(),
-}));
-
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
 }));
 
 const addLabelsMock = vi.fn();
 
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            addLabels: addLabelsMock,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { addLabels: addLabelsMock } });
 
 describe('addLabelToIssue tests', () => {
     beforeEach(() => {
@@ -52,7 +40,7 @@ describe('addLabelToIssue tests', () => {
             label: { name: 'bug' } as Label,
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Adding bug label to issue: john-doe/test-repo#10',
         );
 
@@ -65,10 +53,10 @@ describe('addLabelToIssue tests', () => {
             repo: 'test-repo',
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Added bug label to issue: john-doe/test-repo#10',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should throw error if failed to add the label to the issue', async () => {
@@ -81,10 +69,12 @@ describe('addLabelToIssue tests', () => {
             }),
         ).rejects.toThrow('Network error');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network error' }),
+            }),
             'Failed to add bug label to issue: john-doe/test-repo#10',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should throw error if failed to create the label', async () => {
@@ -100,9 +90,13 @@ describe('addLabelToIssue tests', () => {
         ).rejects.toThrow('Failed to create label');
 
         expect(addLabelsMock).not.toHaveBeenCalled();
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({
+                    message: 'Failed to create label',
+                }),
+            }),
             'Failed to add bug label to issue: john-doe/test-repo#10',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

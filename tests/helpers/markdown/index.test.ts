@@ -11,7 +11,7 @@ import {
     tableCell,
     tableRow,
     text,
-} from '../../../src/helpers/markdown';
+} from '@/src/helpers/markdown';
 
 describe('markdown helpers', () => {
     it('creates a text node', () => {

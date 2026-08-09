@@ -1,7 +1,6 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
-import { serializeError } from 'serialize-error';
-import { AppContext } from '../../../context/app-context';
+import { AppContext } from '@/src/context/app-context';
+import { logger } from '@/src/utils/logger';
 import { OctokitClient } from '../client/octokit-client';
 import { getLabelsFromRepo } from './get-labels';
 
@@ -16,11 +15,11 @@ export const createLabelInRepo = async (label: Label) => {
         const isLabelExists = !!labels.find(({ name }) => name === label.name);
 
         if (isLabelExists) {
-            core.info('Label already exists, skipping label creation');
+            logger.info('Label already exists, skipping label creation');
             return;
         }
 
-        core.info(`Creating label in ${owner}/${repo}`);
+        logger.info(`Creating label in ${owner}/${repo}`);
 
         const client = OctokitClient.getInstance();
 
@@ -32,10 +31,9 @@ export const createLabelInRepo = async (label: Label) => {
             color: label.color,
         });
 
-        core.info(`Created label in ${owner}/${repo}: ${label.name}`);
+        logger.info(`Created label in ${owner}/${repo}: ${label.name}`);
     } catch (err) {
-        core.error(`Failed to create label in ${owner}/${repo}`);
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
+        logger.error({ err }, `Failed to create label in ${owner}/${repo}`);
 
         throw err;
     }

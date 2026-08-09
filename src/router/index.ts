@@ -1,11 +1,10 @@
 import intersection from 'lodash/intersection';
 import values from 'lodash/values';
-import * as core from '@actions/core';
-import { serializeError } from 'serialize-error';
 import { AppContext } from '../context/app-context';
 import { closeIssue, lockIssue } from '../helpers/github/issues';
 import type { GithubEvent, Handler } from '../types';
 import { IssueType, StatusLabel } from '../utils/constants';
+import { logger } from '../utils/logger';
 import { postSummaryComment } from '../workflow/summary-comment';
 import { upsertStatusComment } from '../workflow/status-comment';
 import { updateStatus } from '../workflow/status-label';
@@ -32,12 +31,12 @@ export const routeEvent = async (event: GithubEvent) => {
         );
 
         if (requests.length > 1) {
-            core.error(`Multiple request in given issue: ${requests}`);
+            logger.error(`Multiple request in given issue: ${requests}`);
             throw new Error('Multiple requests in given issue');
         }
 
         if (!requests.length) {
-            core.error(`No request found in given issue: ${requests}`);
+            logger.error(`No request found in given issue: ${requests}`);
             throw new Error('No request found in given issue');
         }
 
@@ -61,29 +60,28 @@ export const routeEvent = async (event: GithubEvent) => {
             `../handlers/${type}/handler`
         )) as Handler;
 
-        core.startGroup(`[${type}]`);
+        logger.info(`[${type}]`);
         await handler.handle(event);
-        core.endGroup();
     } catch (err) {
         await handleError(issueNumber, err);
     } finally {
         await closeIssue({ issueNumber });
 
         await postSummaryComment().catch((err) => {
-            core.error(
+            logger.error(
+                { err },
                 `Failed to post summary comment on issue #${issueNumber}`,
             );
-            core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
         });
     }
 };
 
 const handleError = async (issueNumber: number, error: unknown) => {
     await failActiveStep(error).catch((err) => {
-        core.error(
+        logger.error(
+            { err },
             `Failed to mark active step as failed on issue #${issueNumber}`,
         );
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
     });
 
     try {
@@ -92,7 +90,9 @@ const handleError = async (issueNumber: number, error: unknown) => {
         await updateStatus(issueNumber, StatusLabel.FAILED);
         await upsertStatusComment();
     } catch (err) {
-        core.error(`Failed to report error on issue #${issueNumber}`);
-        core.debug(`[Error]: ${JSON.stringify(serializeError(err))}`);
+        logger.error(
+            { err },
+            `Failed to report error on issue #${issueNumber}`,
+        );
     }
 };

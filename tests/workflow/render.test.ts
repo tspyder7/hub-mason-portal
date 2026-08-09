@@ -1,12 +1,12 @@
-import { AppContext } from '../../src/context/app-context';
-import type { Step } from '../../src/types/step';
-import { StepStatus } from '../../src/utils/constants';
-import { renderStatusComment, renderSummary } from '../../src/workflow/render';
+import { AppContext } from '@/src/context/app-context';
+import type { Step } from '@/src/types/step';
+import { StepStatus } from '@/src/utils/constants';
+import { renderStatusComment, renderSummary } from '@/src/workflow/render';
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 

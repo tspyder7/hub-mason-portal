@@ -1,29 +1,21 @@
-import * as core from '@actions/core';
 import type { Label } from '@octokit/webhooks-types';
-import { AppContext } from '../../src/context/app-context';
-import { closeIssue, lockIssue } from '../../src/helpers/github/issues';
-import { routeEvent } from '../../src/router';
-import { postSummaryComment } from '../../src/workflow/summary-comment';
-import { upsertStatusComment } from '../../src/workflow/status-comment';
-import { updateStatus } from '../../src/workflow/status-label';
-import { cancelPendingSteps, failActiveStep } from '../../src/workflow/steps';
+import { AppContext } from '@/src/context/app-context';
+import { closeIssue, lockIssue } from '@/src/helpers/github/issues';
+import { routeEvent } from '@/src/router';
+import { logger } from '@/src/utils/logger';
+import { postSummaryComment } from '@/src/workflow/summary-comment';
+import { upsertStatusComment } from '@/src/workflow/status-comment';
+import { updateStatus } from '@/src/workflow/status-label';
+import { cancelPendingSteps, failActiveStep } from '@/src/workflow/steps';
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-    startGroup: vi.fn(),
-    endGroup: vi.fn(),
-}));
-
-vi.mock('../../src/utils/constants', () => ({
+vi.mock('@/src/utils/constants', () => ({
     IssueType: {
         PROVISION_REPOSITORY: 'repository/provision-repository',
         DELETE_REPO: 'repo/delete',
@@ -45,24 +37,24 @@ vi.mock('../../src/utils/constants', () => ({
 
 const handle = vi.fn();
 
-vi.mock('../../src/handlers/repository/provision-repository/handler', () => ({
+vi.mock('@/src/handlers/repository/provision-repository/handler', () => ({
     handle,
 }));
 
-vi.mock('../../src/helpers/github/issues', () => ({
+vi.mock('@/src/helpers/github/issues', () => ({
     closeIssue: vi.fn(),
     lockIssue: vi.fn(),
 }));
 
-vi.mock('../../src/workflow/status-comment', () => ({
+vi.mock('@/src/workflow/status-comment', () => ({
     upsertStatusComment: vi.fn(),
 }));
 
-vi.mock('../../src/workflow/status-label', () => ({
+vi.mock('@/src/workflow/status-label', () => ({
     updateStatus: vi.fn(),
 }));
 
-vi.mock('../../src/workflow/steps', () => ({
+vi.mock('@/src/workflow/steps', () => ({
     cancelPendingSteps: vi.fn(),
     failActiveStep: vi.fn(),
     toStepError: vi.fn((error: unknown) => ({
@@ -70,7 +62,7 @@ vi.mock('../../src/workflow/steps', () => ({
     })),
 }));
 
-vi.mock('../../src/workflow/summary-comment', () => ({
+vi.mock('@/src/workflow/summary-comment', () => ({
     postSummaryComment: vi.fn(),
 }));
 
@@ -139,7 +131,7 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
             'Multiple request in given issue: repository/provision-repository,repo/delete',
         );
         expect(handle).not.toHaveBeenCalled();
@@ -176,6 +168,9 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
+        expect(logger.info).toHaveBeenCalledWith(
+            '[repository/provision-repository]',
+        );
         expect(handle).toHaveBeenCalledWith(event);
     });
 
@@ -244,10 +239,12 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'step failed' }),
+            }),
             'Failed to mark active step as failed on issue #1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should log when reporting the error on the issue fails', async () => {
@@ -259,10 +256,12 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'comment failed' }),
+            }),
             'Failed to report error on issue #1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 
     it('should log when posting the summary comment fails', async () => {
@@ -273,9 +272,11 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'summary failed' }),
+            }),
             'Failed to post summary comment on issue #1',
         );
-        expect(core.debug).toHaveBeenCalledOnce();
     });
 });

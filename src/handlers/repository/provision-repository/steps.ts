@@ -1,4 +1,4 @@
-import type { StepDefinition } from '../../../types/step';
+import type { StepDefinition } from '@/src/types/step';
 
 export enum Step {
     VERIFY_ISSUE = 'verify-issue',

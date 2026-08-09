@@ -1,12 +1,8 @@
 import { readFileSync } from 'fs';
-import { parseIssue } from '../../src/parser/issue-parser';
-import * as core from '@actions/core';
+import { parseIssue } from '@/src/parser/issue-parser';
+import { logger } from '@/src/utils/logger';
 
 vi.mock('fs');
-
-vi.mock('@actions/core', () => ({
-    error: vi.fn(),
-}));
 
 const issueBody = `
 <!-- template-id: test-request.yml -->
@@ -68,7 +64,7 @@ describe('issue-parser tests', () => {
             ),
         ).toThrow('template-id not found in issueBody');
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
             'Issue body does not include template-id',
         );
     });

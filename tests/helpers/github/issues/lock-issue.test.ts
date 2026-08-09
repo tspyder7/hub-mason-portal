@@ -1,30 +1,18 @@
-import * as core from '@actions/core';
-import { AppContext } from '../../../../src/context/app-context';
-import { OctokitClient } from '../../../../src/helpers/github/client/';
-import { lockIssue } from '../../../../src/helpers/github/issues/lock-issue';
+import { AppContext } from '@/src/context/app-context';
+import { lockIssue } from '@/src/helpers/github/issues/lock-issue';
+import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('../../../../src/helpers/github/events', () => ({
+vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
 const lockMock = vi.fn();
 
-vi.mock('@actions/core', () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-}));
-
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            lock: lockMock,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { lock: lockMock } });
 
 describe('lockIssue tests', () => {
     beforeEach(() => {
@@ -38,7 +26,7 @@ describe('lockIssue tests', () => {
     it('should lock the issue successfully', async () => {
         await lockIssue({ issueNumber: 10 });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Locking issue: john-doe/test-repo#10',
         );
 
@@ -49,10 +37,10 @@ describe('lockIssue tests', () => {
             lock_reason: 'resolved',
         });
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Locked issue: john-doe/test-repo#10',
         );
-        expect(core.error).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should lock the issue with lock reason', async () => {
@@ -75,11 +63,14 @@ describe('lockIssue tests', () => {
             error.message,
         );
 
-        expect(core.info).toHaveBeenCalledWith(
+        expect(logger.info).toHaveBeenCalledWith(
             'Locking issue: john-doe/test-repo#10',
         );
 
-        expect(core.error).toHaveBeenCalledWith(
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                err: expect.objectContaining({ message: 'Network issue' }),
+            }),
             'Failed to lock issue: john-doe/test-repo#10',
         );
     });
