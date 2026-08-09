@@ -1,10 +1,10 @@
 import type { Repository } from '@octokit/webhooks-types';
 import { RequestError } from 'octokit';
 import { AppContext } from '@/src/context/app-context';
-import { OctokitClient } from '@/src/helpers/github/client/octokit-client';
 import { checkRepoExists } from '@/src/helpers/github/repository';
 import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({
     getEventMock: vi.fn(),
@@ -16,13 +16,7 @@ vi.mock('@/src/helpers/github/events', () => ({
 
 const reposGetMock = vi.fn();
 
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        repos: {
-            get: reposGetMock,
-        },
-    },
-} as never);
+mockOctokitClient({ repos: { get: reposGetMock } });
 
 const repository = { name: 'test-repo' } as Repository;
 

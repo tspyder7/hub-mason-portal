@@ -1,8 +1,8 @@
-import { OctokitClient } from '@/src/helpers/github/client/octokit-client';
 import { updateCommentOnIssue } from '@/src/helpers/github/issues';
 import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
 import { AppContext } from '@/src/context/app-context';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
@@ -10,15 +10,9 @@ vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-const updateComment = vi.fn();
+const updateCommentMock = vi.fn();
 
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            updateComment,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { updateComment: updateCommentMock } });
 
 describe('updateCommentOnIssue tests', () => {
     beforeEach(() => {
@@ -26,7 +20,7 @@ describe('updateCommentOnIssue tests', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
-        updateComment.mockResolvedValue({ data: { id: 7 } });
+        updateCommentMock.mockResolvedValue({ data: { id: 7 } });
     });
 
     afterAll(() => {
@@ -39,7 +33,7 @@ describe('updateCommentOnIssue tests', () => {
             comment: 'Updated body',
         });
 
-        expect(updateComment).toHaveBeenCalledWith({
+        expect(updateCommentMock).toHaveBeenCalledWith({
             owner: 'john-doe',
             repo: 'test-repo',
             comment_id: 7,
@@ -51,7 +45,7 @@ describe('updateCommentOnIssue tests', () => {
     });
 
     it('should throw error if failed to update the comment', async () => {
-        updateComment.mockRejectedValueOnce(new Error('Network error'));
+        updateCommentMock.mockRejectedValueOnce(new Error('Network error'));
 
         await expect(
             updateCommentOnIssue({ commentId: 7, comment: 'Updated body' }),

@@ -1,9 +1,9 @@
 import type { Label } from '@octokit/webhooks-types';
 import { AppContext } from '@/src/context/app-context';
-import { OctokitClient } from '@/src/helpers/github/client/octokit-client';
 import { getLabelsFromRepo } from '@/src/helpers/github/repository';
 import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
@@ -11,15 +11,9 @@ vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
 
-const listLabelsForRepo = vi.fn();
+const listLabelsForRepoMock = vi.fn();
 
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            listLabelsForRepo,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { listLabelsForRepo: listLabelsForRepoMock } });
 
 const repoLabels = [{ name: 'bug' }, { name: 'test' }] as Label[];
 
@@ -29,7 +23,7 @@ describe('getLabelsFromRepo tests', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
-        listLabelsForRepo.mockResolvedValue({
+        listLabelsForRepoMock.mockResolvedValue({
             data: repoLabels,
         });
     });
@@ -51,7 +45,7 @@ describe('getLabelsFromRepo tests', () => {
     });
 
     it('should throw error if failed to get the labels from repository', async () => {
-        listLabelsForRepo.mockRejectedValueOnce(new Error('Network error'));
+        listLabelsForRepoMock.mockRejectedValueOnce(new Error('Network error'));
 
         await expect(getLabelsFromRepo()).rejects.toThrow('Network error');
 

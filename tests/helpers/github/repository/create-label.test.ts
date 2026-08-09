@@ -2,9 +2,9 @@ import type { Label } from '@octokit/webhooks-types';
 import { AppContext } from '@/src/context/app-context';
 import { createLabelInRepo } from '@/src/helpers/github/repository';
 import { getLabelsFromRepo } from '@/src/helpers/github/repository/get-labels';
-import { OctokitClient } from '@/src/helpers/github/client/octokit-client';
 import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
@@ -16,13 +16,7 @@ const githubCreateLabelMock = vi.fn();
 
 vi.mock('@/src/helpers/github/repository/get-labels');
 
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            createLabel: githubCreateLabelMock,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { createLabel: githubCreateLabelMock } });
 
 const repoLabels = [{ name: 'bug' }, { name: 'test' }] as Label[];
 

@@ -1,8 +1,8 @@
 import { AppContext } from '@/src/context/app-context';
-import { OctokitClient } from '@/src/helpers/github/client/';
 import { lockIssue } from '@/src/helpers/github/issues/lock-issue';
 import { logger } from '@/src/utils/logger';
 import { createGithubEvent } from '../../../fixtures/github-event';
+import { mockOctokitClient } from '@/tests/fixtures/octokit-client';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
@@ -12,13 +12,7 @@ vi.mock('@/src/helpers/github/events', () => ({
 
 const lockMock = vi.fn();
 
-vi.spyOn(OctokitClient, 'getInstance').mockReturnValue({
-    rest: {
-        issues: {
-            lock: lockMock,
-        },
-    },
-} as never);
+mockOctokitClient({ issues: { lock: lockMock } });
 
 describe('lockIssue tests', () => {
     beforeEach(() => {
