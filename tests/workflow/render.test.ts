@@ -51,7 +51,7 @@ describe('renderStatusComment', () => {
         const body = renderStatusComment(context);
 
         expect(body).toContain(
-            'Workflow run: [test-workflow](https://github.com/john-doe/test-repo/actions/runs/123)',
+            'Workflow run: [123](https://github.com/john-doe/test-repo/actions/runs/123)',
         );
     });
 
@@ -253,7 +253,7 @@ describe('renderSummary', () => {
         const body = renderSummary(context);
 
         expect(body).toContain(
-            'Workflow run: [test-workflow](https://github.com/john-doe/test-repo/actions/runs/123)',
+            'Workflow run: [123](https://github.com/john-doe/test-repo/actions/runs/123)',
         );
     });
 
