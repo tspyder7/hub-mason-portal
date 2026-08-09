@@ -3,6 +3,7 @@ import type {
     Code,
     Heading,
     InlineCode,
+    Link,
     List,
     ListItem,
     Paragraph,
@@ -41,6 +42,12 @@ export const strong = (value: string): Strong => ({
 export const inlineCode = (value: string): InlineCode => ({
     type: 'inlineCode',
     value,
+});
+
+export const link = (url: string, value: string): Link => ({
+    type: 'link',
+    url,
+    children: [text(value)],
 });
 
 export const list = (children: ListItem[]): List => ({

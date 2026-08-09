@@ -3,6 +3,7 @@ import {
     code,
     heading,
     inlineCode,
+    link,
     list,
     listItem,
     paragraph,
@@ -63,6 +64,14 @@ describe('markdown helpers', () => {
         expect(inlineCode('R-1')).toEqual({
             type: 'inlineCode',
             value: 'R-1',
+        });
+    });
+
+    it('creates a link node', () => {
+        expect(link('https://example.com', 'Example')).toEqual({
+            type: 'link',
+            url: 'https://example.com',
+            children: [{ type: 'text', value: 'Example' }],
         });
     });
 
