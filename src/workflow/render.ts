@@ -46,7 +46,7 @@ const renderWorkflowRun = (context: AppContext): Paragraph =>
         text('Workflow run: '),
         link(
             `https://github.com/${context.github.owner}/${context.github.repo}/actions/runs/${context.github.runId}`,
-            context.github.workflow,
+            context.github.runId.toString(),
         ),
     ]);
 
