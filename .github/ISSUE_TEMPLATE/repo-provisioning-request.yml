@@ -3,10 +3,6 @@ description: Submit a formal request to provision a new GitHub repository.
 title: "[Repo Request]:"
 labels: ["repository/provision-repository"]
 body:
-  - type: markdown
-    attributes:
-      value: "<!-- template-id: repo-provisioning-request.yml -->"
-
   - type: input
     id: name
     attributes:

@@ -14,6 +14,7 @@ export interface GithubInfo {
 export interface IssueInfo {
     number: number;
     labels: string[];
+    body: string | null;
 }
 
 export interface RequestInfo {
