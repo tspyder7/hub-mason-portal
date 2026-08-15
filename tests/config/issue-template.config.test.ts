@@ -19,7 +19,12 @@ describe('getIssueTemplate', () => {
         const result = getIssueTemplate('repository/provision-repository');
 
         expect(readFileSync).toHaveBeenCalledWith(
-            join(cwd(), '.github', 'ISSUE_TEMPLATE', 'provision-repository'),
+            join(
+                cwd(),
+                '.github',
+                'ISSUE_TEMPLATE',
+                'repo-provisioning-request.yml',
+            ),
             'utf-8',
         );
         expect(result).toBe(ymlTemplate);
