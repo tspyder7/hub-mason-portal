@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 const ISSUE_TEMPLATE_BASE_PATH = join(cwd(), '.github', 'ISSUE_TEMPLATE');
 
 const IssueTemplate: Map<IssueTypeName, string> = new Map<string, string>([
-    [IssueType.PROVISION_REPOSITORY, 'provision-repository'],
+    [IssueType.PROVISION_REPOSITORY, 'repo-provisioning-request.yml'],
 ]);
 
 export const getIssueTemplate = (requestType: string): string => {

@@ -15,6 +15,10 @@ import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
+const processExitSpy = vi
+    .spyOn(process, 'exit')
+    .mockImplementation((() => {}) as never);
+
 vi.mock('@/src/helpers/github/events', () => ({
     getEvent: getEventMock,
 }));
@@ -73,7 +77,7 @@ vi.mock('@/src/workflow/summary-comment', () => ({
 
 describe('router tests', () => {
     beforeEach(() => {
-        vi.resetAllMocks();
+        vi.clearAllMocks();
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
@@ -203,7 +207,7 @@ describe('router tests', () => {
         expect(postSummaryComment).toHaveBeenCalled();
     });
 
-    it('should close the issue and post the summary when the handler fails', async () => {
+    it('should close the issue and post the summary when the handler fails and exit the process with status 1', async () => {
         const event = createGithubEvent();
         handle.mockRejectedValue(new Error('handler failed'));
 
@@ -211,6 +215,7 @@ describe('router tests', () => {
 
         expect(closeIssue).toHaveBeenCalledWith({ issueNumber: 1 });
         expect(postSummaryComment).toHaveBeenCalled();
+        expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
     it('should close the issue and post the summary when the handler succeeds', async () => {

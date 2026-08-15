@@ -19,6 +19,8 @@ import {
 } from '../workflow/steps';
 
 export const routeEvent = async (event: GithubEvent) => {
+    let hasError: boolean = false;
+
     const {
         issue: { labels: issueLabels },
     } = event;
@@ -75,6 +77,7 @@ export const routeEvent = async (event: GithubEvent) => {
         await handler.handle(event);
     } catch (err) {
         await handleError(issueNumber, err);
+        hasError = true;
     } finally {
         await closeIssue({ issueNumber });
 
@@ -85,6 +88,8 @@ export const routeEvent = async (event: GithubEvent) => {
             );
         });
     }
+
+    hasError && process.exit(1);
 };
 
 const handleError = async (issueNumber: number, error: unknown) => {
