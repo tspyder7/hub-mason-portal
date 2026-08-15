@@ -30,6 +30,7 @@ export class AppContext {
         this.issue = {
             number: issue.number,
             labels: issue.labels?.map(({ name }) => name) ?? [],
+            body: issue.body,
         };
     }
 

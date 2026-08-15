@@ -30,6 +30,7 @@ describe('AppContext', () => {
         expect(instance.issue).toEqual({
             number: 1,
             labels: ['repository/provision-repository'],
+            body: 'issue body',
         });
         expect(instance.request).toBeNull();
         expect(instance.statusCommentId).toBeNull();
@@ -47,6 +48,18 @@ describe('AppContext', () => {
         const instance = AppContext.getInstance();
 
         expect(instance.issue.labels).toEqual([]);
+    });
+
+    it('should default the body to null when the issue has no body', () => {
+        const event = {
+            ...createGithubEvent(),
+            issue: { ...createGithubEvent().issue, body: null },
+        };
+        getEventMock.mockReturnValue(event);
+
+        const instance = AppContext.getInstance();
+
+        expect(instance.issue.body).toBeNull();
     });
 
     it('should return the same instance once created', () => {
