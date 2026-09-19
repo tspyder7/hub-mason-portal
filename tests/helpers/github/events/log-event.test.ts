@@ -8,6 +8,7 @@ describe('logEvent tests', () => {
 
     beforeEach(() => {
         event = {
+            requestId: 'request-123',
             eventName: 'test-event',
             action: 'test',
             issue: {
