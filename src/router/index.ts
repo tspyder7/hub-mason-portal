@@ -79,6 +79,9 @@ export const routeEvent = async (event: GithubEvent) => {
         await handleError(issueNumber, err);
         hasError = true;
     } finally {
+        // TODO: move this logic to handleError as hub-mason-engine will handle delegations
+        // so this workflow should not close and give summary unless failed
+
         await closeIssue({ issueNumber });
 
         await postSummaryComment().catch((err) => {
