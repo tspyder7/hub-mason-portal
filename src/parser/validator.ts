@@ -1,7 +1,7 @@
+import { logger } from 'hub-mason-core/utils/logger';
 import some from 'lodash/some';
+import type { GithubEvent } from '../types/context';
 import { ActionType, EventType, IssueType } from '../utils/constants';
-import { logger } from '../utils/logger';
-import type { GithubEvent } from '../types';
 
 export const validateEvent = (event: GithubEvent) => {
     const {

@@ -1,11 +1,12 @@
 import { AppContext } from '@/src/context/app-context';
 import { getIssueTemplate } from '@/src/config/issue-template.config';
 import { parseIssue } from '@/src/parser/issue-parser';
+
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('@/src/helpers/github/events', () => ({
+vi.mock('hub-mason-core/github/event', () => ({
     getEvent: getEventMock,
 }));
 
