@@ -1,4 +1,10 @@
-import type { IssueTypeName } from '../utils/constants';
+import type { LifecycleManager } from 'hub-mason-core/lifecycle/core/manager';
+import type { GithubEvent } from 'hub-mason-core/types/event';
+
+import type { IssueTypeName, StepStatus } from '../utils/constants';
+
+export type { GithubEvent } from 'hub-mason-core/types/event';
+export type { Repository } from 'hub-mason-core/types/repository';
 
 export interface GithubInfo {
     owner: string;
@@ -22,3 +28,14 @@ export interface RequestInfo {
     requestId: string;
     payload: Record<string, unknown>;
 }
+
+export type HandlerContext = {
+    lifecycle: LifecycleManager<StepStatus>;
+};
+
+export type Handler = {
+    handle: (
+        event: GithubEvent,
+        context: HandlerContext,
+    ) => void | Promise<void>;
+};
