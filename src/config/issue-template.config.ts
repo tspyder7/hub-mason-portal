@@ -1,8 +1,8 @@
-import { join } from 'path';
-import { cwd } from 'process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { cwd } from 'node:process';
+import { logger } from 'hub-mason-core/utils/logger';
 import { IssueType, type IssueTypeName } from '../utils/constants';
-import { logger } from '../utils/logger';
-import { readFileSync } from 'fs';
 
 const ISSUE_TEMPLATE_BASE_PATH = join(cwd(), '.github', 'ISSUE_TEMPLATE');
 

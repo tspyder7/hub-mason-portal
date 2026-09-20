@@ -1,6 +1,10 @@
-import { getEvent } from '../helpers/github/events';
-import type { GithubInfo, IssueInfo, RequestInfo } from '../types';
-import type { Step, StepDefinition, StepError } from '../types/step';
+import { getEvent } from 'hub-mason-core/github/event';
+import { MemoryStore } from 'hub-mason-core/lifecycle/store/memory-store';
+
+import type { StepError } from 'hub-mason-core/lifecycle/core/types';
+import type { Repository } from 'hub-mason-core/types/repository';
+
+import type { GithubInfo, IssueInfo, RequestInfo } from '../types/context';
 import { StepStatus } from '../utils/constants';
 
 export class AppContext {
@@ -9,9 +13,9 @@ export class AppContext {
     readonly github: GithubInfo;
     readonly issue: IssueInfo;
 
+    private readonly _store: MemoryStore<StepStatus>;
     private _request: RequestInfo | null = null;
     private _statusCommentId: number | null = null;
-    private _steps: Step[] = [];
     private _runError: StepError | null = null;
 
     private constructor() {
@@ -32,6 +36,8 @@ export class AppContext {
             labels: issue.labels?.map(({ name }) => name) ?? [],
             body: issue.body,
         };
+
+        this._store = new MemoryStore<StepStatus>();
     }
 
     static getInstance(): AppContext {
@@ -46,6 +52,10 @@ export class AppContext {
         AppContext.instance = undefined;
     }
 
+    get store(): MemoryStore<StepStatus> {
+        return this._store;
+    }
+
     get request(): RequestInfo | null {
         return this._request;
     }
@@ -54,12 +64,12 @@ export class AppContext {
         return this._statusCommentId;
     }
 
-    get steps(): Step[] {
-        return this._steps;
-    }
-
     get runError(): StepError | null {
         return this._runError;
+    }
+
+    get repository(): Repository {
+        return { owner: this.github.owner, repo: this.github.repo };
     }
 
     setRequest(request: RequestInfo): void {
@@ -68,25 +78,6 @@ export class AppContext {
 
     setStatusCommentId(commentId: number): void {
         this._statusCommentId = commentId;
-    }
-
-    setSteps(steps: Step[]): void {
-        this._steps = steps;
-    }
-
-    seedSteps(defs: readonly StepDefinition[]): void {
-        const ids = defs.map(({ id }) => id);
-
-        if (new Set(ids).size !== ids.length) {
-            throw new Error('Duplicate step ids in step definitions');
-        }
-
-        this._steps = defs.map(({ id, name }) => ({
-            id,
-            name,
-            status: StepStatus.PENDING,
-            details: [],
-        }));
     }
 
     setRunError(error: StepError): void {

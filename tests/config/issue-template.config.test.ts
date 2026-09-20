@@ -1,10 +1,12 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { cwd } from 'process';
-import { getIssueTemplate } from '@/src/config/issue-template.config';
-import { logger } from '@/src/utils/logger';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { cwd } from 'node:process';
 
-vi.mock('fs');
+import { logger } from 'hub-mason-core/utils/logger';
+
+import { getIssueTemplate } from '@/src/config/issue-template.config';
+
+vi.mock('node:fs');
 
 describe('getIssueTemplate', () => {
     beforeEach(() => {
