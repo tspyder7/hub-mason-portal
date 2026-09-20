@@ -1,8 +1,10 @@
-import { getEvent, logEvent } from '@/src/helpers/github/events';
+import { getEvent, logEvent } from 'hub-mason-core/github/event';
+
 import { routeEvent } from '@/src/router';
+
 import { createGithubEvent } from './fixtures/github-event';
 
-vi.mock('@/src/helpers/github/events');
+vi.mock('hub-mason-core/github/event');
 
 vi.mock('@/src/router', () => ({
     routeEvent: vi.fn(),
@@ -18,7 +20,7 @@ describe('app tests', () => {
     });
 
     it('should get the event, log it, init the app context and route it', async () => {
-        await import('../src');
+        await import('../src/app');
 
         expect(getEvent).toHaveBeenCalled();
         expect(logEvent).toHaveBeenCalledWith(createGithubEvent());
