@@ -1,22 +1,31 @@
+import { logger } from 'hub-mason-core/utils/logger';
+
 import { AppContext } from '@/src/context/app-context';
 import { handle } from '@/src/handlers/repository/provision-repository/handler';
-import { parseIssue } from '@/src/parser/issue-parser';
-import type { GithubEvent } from '@/src/types';
-import { StatusLabel } from '@/src/utils/constants';
-import { logger } from '@/src/utils/logger';
+import { createLifecycle } from '@/src/handlers/repository/provision-repository/lifecycle';
 import { validateRequest } from '@/src/handlers/repository/provision-repository/request-validator';
-import { updateStatus } from '@/src/workflow/status-label';
+import { Step } from '@/src/handlers/repository/provision-repository/steps';
+import { parseIssue } from '@/src/parser/issue-parser';
+import { StatusLabel } from '@/src/utils/constants';
+import { updateStatus } from '@/src/workflow/portal-reporter';
+
 import { createGithubEvent } from '../../../fixtures/github-event';
 
+import type { GithubEvent, HandlerContext } from '@/src/types/context';
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
-
-const { beginStep, finishStep } = vi.hoisted(() => ({
-    beginStep: vi.fn(),
-    finishStep: vi.fn(),
+const { onTransitionMock } = vi.hoisted(() => ({
+    onTransitionMock: vi.fn(),
 }));
 
-vi.mock('@/src/helpers/github/events', () => ({
+vi.mock('hub-mason-core/github/event', () => ({
     getEvent: getEventMock,
+}));
+
+vi.mock('hub-mason-core/adapters/github/comment-reporter', () => ({
+    createGithubCommentReporter: vi.fn(() => ({
+        onTransition: onTransitionMock,
+    })),
+    postSummaryComment: vi.fn(),
 }));
 
 vi.mock('@/src/parser/issue-parser', () => ({
@@ -30,13 +39,19 @@ vi.mock(
     }),
 );
 
-vi.mock('@/src/workflow/steps', () => ({
-    createSteps: vi.fn(() => ({ beginStep, finishStep })),
-}));
+vi.mock('@/src/workflow/portal-reporter', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('@/src/workflow/portal-reporter')>();
 
-vi.mock('@/src/workflow/status-label', () => ({
-    updateStatus: vi.fn(),
-}));
+    return {
+        ...original,
+        updateStatus: vi.fn(),
+    };
+});
+
+const createContext = (): HandlerContext => ({
+    lifecycle: createLifecycle(),
+});
 
 describe('provision-repository handler', () => {
     beforeEach(() => {
@@ -44,23 +59,22 @@ describe('provision-repository handler', () => {
         AppContext.reset();
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
-        vi.mocked(beginStep).mockResolvedValue(undefined);
-        vi.mocked(finishStep).mockResolvedValue(undefined);
+        onTransitionMock.mockResolvedValue(undefined);
         vi.mocked(parseIssue).mockReturnValue({ name: 'new-repo' });
         vi.mocked(validateRequest).mockResolvedValue(undefined);
         vi.mocked(updateStatus).mockResolvedValue(undefined);
     });
 
     it('should run all steps: verify issue, validate request and provision repository', async () => {
-        await handle(createGithubEvent());
+        const context = createContext();
 
-        expect(beginStep).toHaveBeenNthCalledWith(1, 'verify-issue');
-        expect(beginStep).toHaveBeenNthCalledWith(
-            2,
-            'provision-repository-request-checks',
-        );
-        expect(beginStep).toHaveBeenNthCalledWith(3, 'provision-repository');
+        await handle(createGithubEvent(), context);
 
+        expect(
+            context.lifecycle.steps.every(
+                ({ status }) => status === 'completed',
+            ),
+        ).toBe(true);
         expect(parseIssue).toHaveBeenCalledWith('issue body');
         expect(AppContext.getInstance().request).toEqual({
             type: 'repository/provision-repository',
@@ -71,28 +85,26 @@ describe('provision-repository handler', () => {
         expect(validateRequest).toHaveBeenCalledWith({
             name: 'new-repo',
         });
-        expect(finishStep).toHaveBeenNthCalledWith(1, 'verify-issue');
-        expect(finishStep).toHaveBeenNthCalledWith(
-            2,
-            'provision-repository-request-checks',
-        );
         expect(updateStatus).toHaveBeenCalledWith(1, StatusLabel.IN_PROGRESS);
-        expect(finishStep).toHaveBeenNthCalledWith(3, 'provision-repository');
     });
 
     it('should throw when the issue body is missing', async () => {
+        const context = createContext();
         const event = {
             ...createGithubEvent(),
             issue: { ...createGithubEvent().issue, body: undefined },
         } as unknown as GithubEvent;
 
-        await expect(handle(event)).rejects.toThrow('issueBody not found');
+        await expect(handle(event, context)).rejects.toThrow(
+            'issueBody not found',
+        );
 
-        expect(beginStep).toHaveBeenCalledWith('verify-issue');
         expect(logger.error).toHaveBeenCalledWith(
             'Issue Body is empty or does not exists',
         );
-        expect(finishStep).not.toHaveBeenCalled();
+        expect(
+            context.lifecycle.steps.find(({ id }) => id === Step.VERIFY_ISSUE),
+        ).toMatchObject({ status: 'in-progress' });
     });
 
     it('should propagate parsing errors', async () => {
@@ -100,24 +112,29 @@ describe('provision-repository handler', () => {
             throw new Error('invalid body');
         });
 
-        await expect(handle(createGithubEvent())).rejects.toThrow(
-            'invalid body',
-        );
-
-        expect(finishStep).not.toHaveBeenCalled();
+        await expect(
+            handle(createGithubEvent(), createContext()),
+        ).rejects.toThrow('invalid body');
     });
 
     it('should propagate validation errors before provisioning', async () => {
         vi.mocked(validateRequest).mockRejectedValue(
             new Error('Repository new-repo already exists'),
         );
+        const context = createContext();
 
-        await expect(handle(createGithubEvent())).rejects.toThrow(
+        await expect(handle(createGithubEvent(), context)).rejects.toThrow(
             'Repository new-repo already exists',
         );
 
-        expect(finishStep).toHaveBeenCalledTimes(1);
-        expect(beginStep).not.toHaveBeenCalledWith('provision-repository');
+        expect(
+            context.lifecycle.steps.find(({ id }) => id === Step.VERIFY_ISSUE),
+        ).toMatchObject({ status: 'completed' });
+        expect(
+            context.lifecycle.steps.find(
+                ({ id }) => id === Step.PROVISION_REPOSITORY,
+            ),
+        ).toMatchObject({ status: 'pending' });
         expect(updateStatus).not.toHaveBeenCalled();
     });
 });

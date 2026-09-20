@@ -1,16 +1,22 @@
 import type { Label } from '@octokit/webhooks-types';
-import { AppContext } from '@/src/context/app-context';
 import {
     assignIssueToUser,
     closeIssue,
     lockIssue,
-} from '@/src/helpers/github/issues';
+} from 'hub-mason-core/github/issues';
+import { logger } from 'hub-mason-core/utils/logger';
+import { failActiveStep } from 'hub-mason-core/lifecycle/core/bound-steps';
+import { LifecycleManager } from 'hub-mason-core/lifecycle/core/manager';
+
+import { AppContext } from '@/src/context/app-context';
 import { routeEvent } from '@/src/router';
-import { logger } from '@/src/utils/logger';
-import { postSummaryComment } from '@/src/workflow/summary-comment';
-import { upsertStatusComment } from '@/src/workflow/status-comment';
-import { updateStatus } from '@/src/workflow/status-label';
-import { cancelPendingSteps, failActiveStep } from '@/src/workflow/steps';
+import type { HandlerContext } from '@/src/types/context';
+import {
+    postSummaryComment,
+    syncStatusComment,
+    updateStatus,
+} from '@/src/workflow/portal-reporter';
+
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
@@ -19,7 +25,7 @@ const processExitSpy = vi
     .spyOn(process, 'exit')
     .mockImplementation((() => {}) as never);
 
-vi.mock('@/src/helpers/github/events', () => ({
+vi.mock('hub-mason-core/github/event', () => ({
     getEvent: getEventMock,
 }));
 
@@ -41,6 +47,13 @@ vi.mock('@/src/utils/constants', () => ({
         CANCELLED: 'cancelled',
         FAILED: 'failed',
     },
+    StepStatusEmoji: {
+        pending: '⏳',
+        'in-progress': '🔄',
+        completed: '✅',
+        cancelled: '🚫',
+        failed: '❌',
+    },
 }));
 
 const handle = vi.fn();
@@ -49,30 +62,27 @@ vi.mock('@/src/handlers/repository/provision-repository/handler', () => ({
     handle,
 }));
 
-vi.mock('@/src/helpers/github/issues', () => ({
+vi.mock('hub-mason-core/github/issues', () => ({
     assignIssueToUser: vi.fn(),
     closeIssue: vi.fn(),
     lockIssue: vi.fn(),
 }));
 
-vi.mock('@/src/workflow/status-comment', () => ({
-    upsertStatusComment: vi.fn(),
-}));
-
-vi.mock('@/src/workflow/status-label', () => ({
-    updateStatus: vi.fn(),
-}));
-
-vi.mock('@/src/workflow/steps', () => ({
-    cancelPendingSteps: vi.fn(),
-    failActiveStep: vi.fn(),
+vi.mock('hub-mason-core/lifecycle/core/errors', () => ({
     toStepError: vi.fn((error: unknown) => ({
         message: error instanceof Error ? error.message : 'Unknown error',
     })),
 }));
 
-vi.mock('@/src/workflow/summary-comment', () => ({
+vi.mock('@/src/workflow/portal-reporter', () => ({
+    createPortalCommentReporter: vi.fn(() => ({ onTransition: vi.fn() })),
     postSummaryComment: vi.fn(),
+    syncStatusComment: vi.fn(),
+    updateStatus: vi.fn(),
+}));
+
+vi.mock('hub-mason-core/lifecycle/core/bound-steps', () => ({
+    failActiveStep: vi.fn(),
 }));
 
 describe('router tests', () => {
@@ -82,14 +92,16 @@ describe('router tests', () => {
         getEventMock.mockReturnValue(createGithubEvent());
         AppContext.getInstance();
         vi.mocked(updateStatus).mockResolvedValue(undefined);
-        vi.mocked(upsertStatusComment).mockResolvedValue(undefined);
+        vi.mocked(syncStatusComment).mockResolvedValue(undefined);
         vi.mocked(lockIssue).mockResolvedValue(undefined);
         vi.mocked(assignIssueToUser).mockResolvedValue(undefined);
         vi.mocked(closeIssue).mockResolvedValue(undefined);
         vi.mocked(failActiveStep).mockResolvedValue(undefined);
-        vi.mocked(cancelPendingSteps).mockReturnValue(undefined);
         vi.mocked(postSummaryComment).mockResolvedValue(undefined);
         handle.mockResolvedValue(undefined);
+        vi.spyOn(LifecycleManager.prototype, 'cancelPending').mockReturnValue(
+            undefined,
+        );
     });
 
     it('should set the opened status before locking, then initiated status after validation checks', async () => {
@@ -100,15 +112,21 @@ describe('router tests', () => {
         expect(updateStatus).toHaveBeenNthCalledWith(1, 1, {
             name: 'status:opened',
         });
-        expect(lockIssue).toHaveBeenCalledWith({ issueNumber: 1 });
-        expect(assignIssueToUser).toHaveBeenCalledWith({
-            issueNumber: 1,
-            assignee: ['john-doe'],
-        });
+        expect(lockIssue).toHaveBeenCalledWith(
+            { issueNumber: 1 },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
+        expect(assignIssueToUser).toHaveBeenCalledWith(
+            {
+                issueNumber: 1,
+                assignee: ['john-doe'],
+            },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
         expect(updateStatus).toHaveBeenNthCalledWith(2, 1, {
             name: 'status:initiated',
         });
-        expect(AppContext.getInstance().steps).toEqual([
+        expect(AppContext.getInstance().store.get()).toEqual([
             {
                 id: 'verify-issue',
                 name: 'Verify issue',
@@ -128,7 +146,7 @@ describe('router tests', () => {
                 details: [],
             },
         ]);
-        expect(upsertStatusComment).toHaveBeenCalledTimes(1);
+        expect(syncStatusComment).toHaveBeenCalledTimes(1);
     });
 
     it('should log an error when there are multiple requests in the issue labels', async () => {
@@ -149,12 +167,15 @@ describe('router tests', () => {
             'Multiple request in given issue: repository/provision-repository,repo/delete',
         );
         expect(handle).not.toHaveBeenCalled();
-        expect(AppContext.getInstance().steps).toEqual([]);
+        expect(AppContext.getInstance().store.get()).toEqual([]);
         expect(updateStatus).toHaveBeenCalledWith(1, {
             name: 'status:failed',
         });
-        expect(upsertStatusComment).toHaveBeenCalledTimes(1);
-        expect(closeIssue).toHaveBeenCalledWith({ issueNumber: 1 });
+        expect(syncStatusComment).not.toHaveBeenCalled();
+        expect(closeIssue).toHaveBeenCalledWith(
+            { issueNumber: 1 },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
         expect(postSummaryComment).toHaveBeenCalled();
     });
 
@@ -173,11 +194,14 @@ describe('router tests', () => {
         expect(AppContext.getInstance().runError).toEqual({
             message: 'No request found in given issue',
         });
-        expect(closeIssue).toHaveBeenCalledWith({ issueNumber: 1 });
+        expect(closeIssue).toHaveBeenCalledWith(
+            { issueNumber: 1 },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
         expect(postSummaryComment).toHaveBeenCalled();
     });
 
-    it('should call handler for given request', async () => {
+    it('should call handler for given request with the lifecycle context', async () => {
         const event = createGithubEvent();
 
         await routeEvent(event);
@@ -185,7 +209,13 @@ describe('router tests', () => {
         expect(logger.info).toHaveBeenCalledWith(
             '[repository/provision-repository]',
         );
-        expect(handle).toHaveBeenCalledWith(event);
+        expect(handle).toHaveBeenCalledWith(
+            event,
+            expect.objectContaining({ lifecycle: expect.anything() }),
+        );
+        const context = vi.mocked(handle).mock.calls[0]![1] as HandlerContext;
+
+        expect(context.lifecycle.steps).toHaveLength(3);
     });
 
     it('should fail the active step, cancel remaining and sync the comment when the handler fails', async () => {
@@ -195,12 +225,21 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(failActiveStep).toHaveBeenCalledWith(error);
-        expect(cancelPendingSteps).toHaveBeenCalled();
+        expect(failActiveStep).toHaveBeenCalledWith(
+            expect.objectContaining({
+                manager: expect.anything(),
+                running: 'in-progress',
+                failed: 'failed',
+                error,
+            }),
+        );
+        expect(
+            vi.mocked(LifecycleManager.prototype.cancelPending),
+        ).toHaveBeenCalled();
         expect(updateStatus).toHaveBeenCalledWith(1, {
             name: 'status:failed',
         });
-        expect(upsertStatusComment).toHaveBeenCalledTimes(2);
+        expect(syncStatusComment).toHaveBeenCalledTimes(2);
         expect(AppContext.getInstance().runError).toEqual({
             message: 'handler failed',
         });
@@ -213,7 +252,10 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(closeIssue).toHaveBeenCalledWith({ issueNumber: 1 });
+        expect(closeIssue).toHaveBeenCalledWith(
+            { issueNumber: 1 },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
         expect(postSummaryComment).toHaveBeenCalled();
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
@@ -223,7 +265,23 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(closeIssue).toHaveBeenCalledWith({ issueNumber: 1 });
+        expect(closeIssue).toHaveBeenCalledWith(
+            { issueNumber: 1 },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
+        expect(postSummaryComment).toHaveBeenCalled();
+    });
+
+    it('should still post the summary when closing the issue fails', async () => {
+        const event = createGithubEvent();
+        vi.mocked(closeIssue).mockRejectedValueOnce(new Error('close failed'));
+
+        await routeEvent(event);
+
+        expect(closeIssue).toHaveBeenCalledWith(
+            { issueNumber: 1 },
+            { owner: 'john-doe', repo: 'test-repo' },
+        );
         expect(postSummaryComment).toHaveBeenCalled();
     });
 
@@ -234,11 +292,11 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(failActiveStep).toHaveBeenCalledWith(error);
+        expect(failActiveStep).not.toHaveBeenCalled();
         expect(updateStatus).toHaveBeenCalledWith(1, {
             name: 'status:failed',
         });
-        expect(upsertStatusComment).toHaveBeenCalledTimes(1);
+        expect(syncStatusComment).not.toHaveBeenCalled();
         expect(AppContext.getInstance().runError).toEqual({
             message: 'lock failed',
         });
@@ -252,11 +310,11 @@ describe('router tests', () => {
 
         await routeEvent(event);
 
-        expect(failActiveStep).toHaveBeenCalledWith(error);
+        expect(failActiveStep).not.toHaveBeenCalled();
         expect(updateStatus).toHaveBeenCalledWith(1, {
             name: 'status:failed',
         });
-        expect(upsertStatusComment).toHaveBeenCalledTimes(1);
+        expect(syncStatusComment).not.toHaveBeenCalled();
         expect(AppContext.getInstance().runError).toEqual({
             message: 'assign failed',
         });
@@ -283,7 +341,7 @@ describe('router tests', () => {
     it('should log when reporting the error on the issue fails', async () => {
         const event = createGithubEvent();
         handle.mockRejectedValue(new Error('handler failed'));
-        vi.mocked(upsertStatusComment)
+        vi.mocked(syncStatusComment)
             .mockResolvedValueOnce(undefined)
             .mockRejectedValueOnce(new Error('comment failed'));
 

@@ -1,6 +1,7 @@
-import { checkRepoExists } from '@/src/helpers/github/repository';
-import { logger } from '@/src/utils/logger';
+import { checkRepoExists as checkRepoExistsCore } from 'hub-mason-core/github/repository';
+import { logger } from 'hub-mason-core/utils/logger';
 import { z } from 'zod';
+import { AppContext } from '@/src/context/app-context';
 import type { ProvisionRepositoryRequest } from './type';
 
 const provisionRepositoryRequestSchema = z.object({
@@ -22,7 +23,12 @@ export const validateRequest = async (
         throw new Error(errorMessage);
     }
 
-    const isRepoExists = await checkRepoExists(parsed.data.name);
+    const { repository } = AppContext.getInstance();
+
+    const isRepoExists = await checkRepoExistsCore({
+        repo: parsed.data.name,
+        owner: repository.owner,
+    });
 
     if (isRepoExists) {
         logger.error(`Repository ${parsed.data.name} already exists`);

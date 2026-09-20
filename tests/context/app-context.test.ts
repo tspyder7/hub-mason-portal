@@ -1,10 +1,12 @@
+import { MemoryStore } from 'hub-mason-core/lifecycle/store/memory-store';
+
 import { AppContext } from '@/src/context/app-context';
-import { StepStatus } from '@/src/utils/constants';
+
 import { createGithubEvent } from '../fixtures/github-event';
 
 const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
 
-vi.mock('@/src/helpers/github/events', () => ({
+vi.mock('hub-mason-core/github/event', () => ({
     getEvent: getEventMock,
 }));
 
@@ -34,8 +36,24 @@ describe('AppContext', () => {
         });
         expect(instance.request).toBeNull();
         expect(instance.statusCommentId).toBeNull();
-        expect(instance.steps).toEqual([]);
+        expect(instance.store.get()).toEqual([]);
         expect(instance.runError).toBeNull();
+    });
+
+    it('should expose the repository from the github details', () => {
+        const instance = AppContext.getInstance();
+
+        expect(instance.repository).toEqual({
+            owner: 'john-doe',
+            repo: 'test-repo',
+        });
+    });
+
+    it('should expose a memory store for lifecycle steps', () => {
+        const instance = AppContext.getInstance();
+
+        expect(instance.store).toBeInstanceOf(MemoryStore);
+        expect(instance.store.get()).toEqual([]);
     });
 
     it('should default labels to an empty array when the issue has no labels', () => {
@@ -78,6 +96,22 @@ describe('AppContext', () => {
         expect(second).not.toBe(first);
     });
 
+    it('should reset the store after reset', () => {
+        const first = AppContext.getInstance();
+        first.store.set(() => [
+            {
+                id: 'step-1',
+                name: 'Step one',
+                status: 'pending' as never,
+                details: [],
+            },
+        ]);
+
+        AppContext.reset();
+
+        expect(AppContext.getInstance().store.get()).toEqual([]);
+    });
+
     it('should set the request', () => {
         const instance = AppContext.getInstance();
 
@@ -102,65 +136,6 @@ describe('AppContext', () => {
         instance.setStatusCommentId(42);
 
         expect(instance.statusCommentId).toBe(42);
-    });
-
-    it('should set the steps', () => {
-        const instance = AppContext.getInstance();
-
-        instance.setSteps([
-            {
-                id: 'step-1',
-                name: 'Step one',
-                status: StepStatus.IN_PROGRESS,
-                startedAt: '2026-01-01T00:00:00.000Z',
-                details: [],
-            },
-        ]);
-
-        expect(instance.steps).toEqual([
-            {
-                id: 'step-1',
-                name: 'Step one',
-                status: StepStatus.IN_PROGRESS,
-                startedAt: '2026-01-01T00:00:00.000Z',
-                details: [],
-            },
-        ]);
-    });
-
-    it('should seed steps as pending from the step definitions', () => {
-        const instance = AppContext.getInstance();
-
-        instance.seedSteps([
-            { id: 'parse-request', name: 'Parse request' },
-            { id: 'validate-labels', name: 'Validate labels' },
-        ]);
-
-        expect(instance.steps).toEqual([
-            {
-                id: 'parse-request',
-                name: 'Parse request',
-                status: StepStatus.PENDING,
-                details: [],
-            },
-            {
-                id: 'validate-labels',
-                name: 'Validate labels',
-                status: StepStatus.PENDING,
-                details: [],
-            },
-        ]);
-    });
-
-    it('should throw when the step definitions contain duplicate ids', () => {
-        const instance = AppContext.getInstance();
-
-        expect(() =>
-            instance.seedSteps([
-                { id: 'parse-request', name: 'Parse request' },
-                { id: 'parse-request', name: 'Parse request again' },
-            ]),
-        ).toThrow('Duplicate step ids in step definitions');
     });
 
     it('should set the run error', () => {

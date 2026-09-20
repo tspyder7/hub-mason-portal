@@ -1,6 +1,7 @@
-import type { GithubEvent } from '@/src/types';
 import type { Label } from '@octokit/webhooks-types';
-import { logger } from '@/src/utils/logger';
+import { logger } from 'hub-mason-core/utils/logger';
+
+import type { GithubEvent } from '@/src/types/context';
 
 vi.mock('@/src/utils/constants', async (importOriginal) => {
     const actualModule =

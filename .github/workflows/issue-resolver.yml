@@ -51,5 +51,5 @@ jobs:
       # STEP_4: Resolve Issue
       - name: Resolve Issue
         env:
-          HUB_MASON_APP_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: bun run src/index.ts
+          HUB_MASON_GITHUB_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: bun run src/app.ts
