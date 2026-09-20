@@ -1,10 +1,12 @@
 import { vi } from 'vitest';
 
-vi.mock('@/src/utils/logger', () => ({
-    logger: {
-        debug: vi.fn(),
-        error: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-    },
+const mockLogger = {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+};
+
+vi.mock('hub-mason-core/utils/logger', () => ({
+    logger: mockLogger,
 }));

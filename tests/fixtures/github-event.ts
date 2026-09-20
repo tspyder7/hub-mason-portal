@@ -1,4 +1,4 @@
-import type { GithubEvent } from '@/src/types';
+import type { GithubEvent } from 'hub-mason-core/types/event';
 
 export const createGithubEvent = (): GithubEvent =>
     ({

@@ -1,25 +1,28 @@
-import intersection from 'lodash/intersection';
-import values from 'lodash/values';
-import { AppContext } from '../context/app-context';
 import {
     assignIssueToUser,
     closeIssue,
     lockIssue,
-} from '../helpers/github/issues';
-import type { GithubEvent, Handler } from '../types';
-import { IssueType, StatusLabel } from '../utils/constants';
-import { logger } from '../utils/logger';
-import { postSummaryComment } from '../workflow/summary-comment';
-import { upsertStatusComment } from '../workflow/status-comment';
-import { updateStatus } from '../workflow/status-label';
-import {
-    cancelPendingSteps,
-    failActiveStep,
-    toStepError,
-} from '../workflow/steps';
+} from 'hub-mason-core/github/issues';
+import { failActiveStep } from 'hub-mason-core/lifecycle/core/bound-steps';
+import { toStepError } from 'hub-mason-core/lifecycle/core/errors';
+import { logger } from 'hub-mason-core/utils/logger';
+import intersection from 'lodash/intersection';
+import values from 'lodash/values';
 
-export const routeEvent = async (event: GithubEvent) => {
+import { AppContext } from '../context/app-context';
+import { IssueType, StatusLabel, StepStatus } from '../utils/constants';
+import {
+    postSummaryComment,
+    syncStatusComment,
+    updateStatus,
+} from '../workflow/portal-reporter';
+
+import type { LifecycleManager } from 'hub-mason-core/lifecycle/core/manager';
+import type { GithubEvent, Handler, HandlerContext } from '../types/context';
+
+export const routeEvent = async (event: GithubEvent): Promise<void> => {
     let hasError: boolean = false;
+    let lifecycle: LifecycleManager<StepStatus> | undefined;
 
     const {
         issue: { labels: issueLabels },
@@ -30,13 +33,18 @@ export const routeEvent = async (event: GithubEvent) => {
         user: { login: issueAuthor },
     } = event.issue;
 
+    const { repository } = AppContext.getInstance();
+
     try {
         await updateStatus(issueNumber, StatusLabel.OPENED);
-        await lockIssue({ issueNumber });
-        await assignIssueToUser({
-            issueNumber,
-            assignee: [issueAuthor],
-        });
+        await lockIssue({ issueNumber }, repository);
+        await assignIssueToUser(
+            {
+                issueNumber,
+                assignee: [issueAuthor],
+            },
+            repository,
+        );
 
         const requests = intersection(
             values(IssueType),
@@ -57,32 +65,34 @@ export const routeEvent = async (event: GithubEvent) => {
 
         const type = requests[0]!;
 
-        AppContext.getInstance().seedSteps(
-            (
-                await import(
-                    /* @vite-ignore */
-                    `../handlers/${type}/steps`
-                )
-            ).STEPS,
-        );
+        const lifecycleModule = (await import(
+            /* @vite-ignore */
+            `../handlers/${type}/lifecycle`
+        )) as {
+            createLifecycle: () => LifecycleManager<StepStatus>;
+        };
 
-        await upsertStatusComment();
+        lifecycle = lifecycleModule.createLifecycle();
+
+        await syncStatusComment(lifecycle);
 
         const handler = (await import(
             /* @vite-ignore */
             `../handlers/${type}/handler`
         )) as Handler;
 
+        const context: HandlerContext = { lifecycle };
+
         logger.info(`[${type}]`);
-        await handler.handle(event);
+        await handler.handle(event, context);
     } catch (err) {
-        await handleError(issueNumber, err);
+        await handleError(issueNumber, err, lifecycle);
         hasError = true;
     } finally {
         // TODO: move this logic to handleError as hub-mason-engine will handle delegations
         // so this workflow should not close and give summary unless failed
 
-        await closeIssue({ issueNumber });
+        await closeIssue({ issueNumber }, repository).catch(() => {});
 
         await postSummaryComment().catch((err) => {
             logger.error(
@@ -95,19 +105,29 @@ export const routeEvent = async (event: GithubEvent) => {
     hasError && process.exit(1);
 };
 
-const handleError = async (issueNumber: number, error: unknown) => {
-    await failActiveStep(error).catch((err) => {
-        logger.error(
-            { err },
-            `Failed to mark active step as failed on issue #${issueNumber}`,
-        );
-    });
+const handleError = async (
+    issueNumber: number,
+    error: unknown,
+    lifecycle: LifecycleManager<StepStatus> | undefined,
+): Promise<void> => {
+    lifecycle &&
+        (await failActiveStep({
+            manager: lifecycle,
+            running: StepStatus.IN_PROGRESS,
+            failed: StepStatus.FAILED,
+            error,
+        }).catch((err) => {
+            logger.error(
+                { err },
+                `Failed to mark active step as failed on issue #${issueNumber}`,
+            );
+        }));
 
     try {
         AppContext.getInstance().setRunError(toStepError(error));
-        cancelPendingSteps();
+        lifecycle?.cancelPending();
         await updateStatus(issueNumber, StatusLabel.FAILED);
-        await upsertStatusComment();
+        lifecycle && (await syncStatusComment(lifecycle));
     } catch (err) {
         logger.error(
             { err },
