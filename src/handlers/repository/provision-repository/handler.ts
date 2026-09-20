@@ -1,18 +1,24 @@
+import { logger } from 'hub-mason-core/utils/logger';
+
 import { AppContext } from '@/src/context/app-context';
 import { parseIssue } from '@/src/parser/issue-parser';
-import type { GithubEvent } from '@/src/types';
+import type { GithubEvent, HandlerContext } from '@/src/types/context';
 import { IssueType, StatusLabel } from '@/src/utils/constants';
-import { logger } from '@/src/utils/logger';
-import { createSteps } from '@/src/workflow/steps';
-import { updateStatus } from '@/src/workflow/status-label';
-import { STEPS, Step } from './steps';
+import { updateStatus } from '@/src/workflow/portal-reporter';
+import { createSteps } from './lifecycle';
+import { Step } from './steps';
 import type { ProvisionRepositoryRequest } from './type';
 import { validateRequest } from './request-validator';
 
-const { beginStep, finishStep } = createSteps(STEPS);
-
-export const handle = async (event: GithubEvent) => {
-    const { body: issueBody, number: issueNumber } = event.issue;
+export const handle = async (
+    event: GithubEvent,
+    context: HandlerContext,
+): Promise<void> => {
+    const { lifecycle } = context;
+    const { beginStep, finishStep } = createSteps(lifecycle);
+    const {
+        issue: { body: issueBody, number: issueNumber },
+    } = event;
 
     await beginStep(Step.VERIFY_ISSUE);
 

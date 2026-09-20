@@ -1,9 +1,19 @@
-import { checkRepoExists } from '@/src/helpers/github/repository';
+import { checkRepoExists } from 'hub-mason-core/github/repository';
+import { logger } from 'hub-mason-core/utils/logger';
+
+import { AppContext } from '@/src/context/app-context';
 import { validateRequest } from '@/src/handlers/repository/provision-repository/request-validator';
-import { logger } from '@/src/utils/logger';
 import type { ProvisionRepositoryRequest } from '@/src/handlers/repository/provision-repository/type';
 
-vi.mock('@/src/helpers/github/repository', () => ({
+import { createGithubEvent } from '../../../fixtures/github-event';
+
+const { getEventMock } = vi.hoisted(() => ({ getEventMock: vi.fn() }));
+
+vi.mock('hub-mason-core/github/event', () => ({
+    getEvent: getEventMock,
+}));
+
+vi.mock('hub-mason-core/github/repository', () => ({
     checkRepoExists: vi.fn(),
 }));
 
@@ -17,6 +27,9 @@ const mockProvisionRepoRequest: ProvisionRepositoryRequest = {
 describe('validateRequest', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        AppContext.reset();
+        getEventMock.mockReturnValue(createGithubEvent());
+        AppContext.getInstance();
         vi.mocked(checkRepoExists).mockResolvedValue(false);
     });
 
@@ -61,8 +74,14 @@ describe('validateRequest', () => {
             validateRequest({ ...mockProvisionRepoRequest, name: 'repo123' }),
         ).resolves.toBeUndefined();
 
-        expect(checkRepoExists).toHaveBeenCalledWith('identity-2fa');
-        expect(checkRepoExists).toHaveBeenCalledWith('repo123');
+        expect(checkRepoExists).toHaveBeenCalledWith({
+            repo: 'identity-2fa',
+            owner: 'john-doe',
+        });
+        expect(checkRepoExists).toHaveBeenCalledWith({
+            repo: 'repo123',
+            owner: 'john-doe',
+        });
     });
 
     it('should throw when the repository already exists', async () => {
@@ -75,7 +94,10 @@ describe('validateRequest', () => {
             }),
         ).rejects.toThrow('Repository existing-repo already exists');
 
-        expect(checkRepoExists).toHaveBeenCalledWith('existing-repo');
+        expect(checkRepoExists).toHaveBeenCalledWith({
+            repo: 'existing-repo',
+            owner: 'john-doe',
+        });
         expect(logger.error).toHaveBeenCalledWith(
             'Repository existing-repo already exists',
         );

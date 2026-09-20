@@ -1,4 +1,4 @@
-import type { StepDefinition } from '@/src/types/step';
+import type { StepDefinition } from 'hub-mason-core/lifecycle/core/types';
 
 export enum Step {
     VERIFY_ISSUE = 'verify-issue',
