@@ -9,7 +9,10 @@ import { getWorkflowSecretKey } from '@/src/workflow/workflow-secret';
 import type { LifecycleManager } from 'hub-mason-core/lifecycle/core/manager';
 import type { EngineDispatchContext } from '@/src/types/workflow';
 import type { StepStatus } from '@/src/utils/constants';
-import type { ProvisionRepositoryRequest } from './type';
+import type {
+    ProvisionRepositoryRequest,
+    ProvisionRepositoryWorkflowRequest,
+} from './type';
 
 export const dispatchConfig = {
     repo: 'hub-mason-engine',
@@ -17,6 +20,19 @@ export const dispatchConfig = {
     ref: 'main',
     requestType: IssueType.PROVISION_REPOSITORY,
 } as const;
+
+export const toWorkflowRequest = ({
+    visibility,
+    topics,
+    ...rest
+}: ProvisionRepositoryRequest): ProvisionRepositoryWorkflowRequest => ({
+    isPublic: visibility?.[0] === 'public',
+    topics: (topics ?? '')
+        .split(' ')
+        .map((topic) => topic.trim())
+        .filter((topic) => topic !== ''),
+    ...rest,
+});
 
 export const dispatchProvisionRepository = async (
     request: ProvisionRepositoryRequest,
@@ -55,12 +71,14 @@ export const dispatchProvisionRepository = async (
         `Dispatching ${dispatchConfig.workflowId} for request ${requestId} to ${app.github.owner}/${dispatchConfig.repo}@${dispatchConfig.ref}`,
     );
 
+    const workflowRequest = toWorkflowRequest(request);
+
     await dispatchWorkflow(
         {
             workflowId: dispatchConfig.workflowId,
             ref: dispatchConfig.ref,
             inputs: {
-                request: JSON.stringify(request),
+                request: JSON.stringify(workflowRequest),
                 context: JSON.stringify(context),
             },
         },

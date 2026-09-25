@@ -5,6 +5,7 @@ import { AppContext } from '@/src/context/app-context';
 import {
     dispatchConfig,
     dispatchProvisionRepository,
+    toWorkflowRequest,
 } from '@/src/handlers/repository/provision-repository/dispatch';
 import { createLifecycle } from '@/src/handlers/repository/provision-repository/lifecycle';
 
@@ -74,7 +75,12 @@ describe('provision-repository dispatch', () => {
 
         const parsedRequest = JSON.parse(input.inputs?.['request'] as string);
 
-        expect(parsedRequest).toEqual(request);
+        expect(parsedRequest).toEqual({
+            name: 'new-repo',
+            description: 'test repo',
+            isPublic: false,
+            topics: ['test'],
+        });
 
         const parsedContext = JSON.parse(input.inputs?.['context'] as string);
 
@@ -132,5 +138,74 @@ describe('provision-repository dispatch', () => {
             'Missing required environment variable: HUB_MASON_WORKFLOW_SECRET_KEY',
         );
         expect(dispatchWorkflow).not.toHaveBeenCalled();
+    });
+
+    describe('toWorkflowRequest', () => {
+        it('maps public visibility to isPublic true', () => {
+            expect(
+                toWorkflowRequest({
+                    name: 'new-repo',
+                    description: 'test repo',
+                    visibility: ['public'],
+                    topics: 'test',
+                }),
+            ).toEqual({
+                name: 'new-repo',
+                description: 'test repo',
+                isPublic: true,
+                topics: ['test'],
+            });
+        });
+
+        it('splits space-separated topics, trims words and drops empty strings', () => {
+            expect(
+                toWorkflowRequest({
+                    name: 'new-repo',
+                    description: 'test repo',
+                    visibility: ['private'],
+                    topics: '  go  microservice   gRPC  ',
+                }),
+            ).toEqual({
+                name: 'new-repo',
+                description: 'test repo',
+                isPublic: false,
+                topics: ['go', 'microservice', 'gRPC'],
+            });
+        });
+
+        it('maps missing topics to empty array', () => {
+            expect(
+                toWorkflowRequest({
+                    name: 'new-repo',
+                    description: 'test repo',
+                    visibility: ['private'],
+                }),
+            ).toEqual({
+                name: 'new-repo',
+                description: 'test repo',
+                isPublic: false,
+                topics: [],
+            });
+        });
+
+        it('maps missing visibility to isPublic false', () => {
+            expect(
+                toWorkflowRequest({
+                    name: 'new-repo',
+                    description: 'test repo',
+                    topics: 'test',
+                } as unknown as {
+                    name: string;
+                    description: string;
+                    visibility: string[];
+                    topics: string;
+                }),
+            ).toEqual({
+                name: 'new-repo',
+                description: 'test repo',
+                isPublic: false,
+                topics: ['test'],
+            });
+        });
     });
 });
