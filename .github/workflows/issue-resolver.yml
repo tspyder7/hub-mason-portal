@@ -52,4 +52,5 @@ jobs:
       - name: Resolve Issue
         env:
           HUB_MASON_GITHUB_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          HUB_MASON_WORKFLOW_SECRET_KEY: ${{ secrets.HUB_MASON_WORKFLOW_SECRET_KEY }}
         run: bun run src/app.ts
