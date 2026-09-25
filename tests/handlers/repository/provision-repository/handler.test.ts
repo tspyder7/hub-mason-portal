@@ -2,6 +2,7 @@ import { logger } from 'hub-mason-core/utils/logger';
 
 import { AppContext } from '@/src/context/app-context';
 import { handle } from '@/src/handlers/repository/provision-repository/handler';
+import { dispatchProvisionRepository } from '@/src/handlers/repository/provision-repository/dispatch';
 import { createLifecycle } from '@/src/handlers/repository/provision-repository/lifecycle';
 import { validateRequest } from '@/src/handlers/repository/provision-repository/request-validator';
 import { Step } from '@/src/handlers/repository/provision-repository/steps';
@@ -49,6 +50,10 @@ vi.mock('@/src/workflow/portal-reporter', async (importOriginal) => {
     };
 });
 
+vi.mock('@/src/handlers/repository/provision-repository/dispatch', () => ({
+    dispatchProvisionRepository: vi.fn(),
+}));
+
 const createContext = (): HandlerContext => ({
     lifecycle: createLifecycle(),
 });
@@ -63,6 +68,7 @@ describe('provision-repository handler', () => {
         vi.mocked(parseIssue).mockReturnValue({ name: 'new-repo' });
         vi.mocked(validateRequest).mockResolvedValue(undefined);
         vi.mocked(updateStatus).mockResolvedValue(undefined);
+        vi.mocked(dispatchProvisionRepository).mockResolvedValue(undefined);
     });
 
     it('should run all steps: verify issue, validate request and provision repository', async () => {
@@ -86,6 +92,10 @@ describe('provision-repository handler', () => {
             name: 'new-repo',
         });
         expect(updateStatus).toHaveBeenCalledWith(1, StatusLabel.IN_PROGRESS);
+        expect(dispatchProvisionRepository).toHaveBeenCalledWith(
+            { name: 'new-repo' },
+            context.lifecycle,
+        );
     });
 
     it('should throw when the issue body is missing', async () => {
@@ -136,5 +146,24 @@ describe('provision-repository handler', () => {
             ),
         ).toMatchObject({ status: 'pending' });
         expect(updateStatus).not.toHaveBeenCalled();
+        expect(dispatchProvisionRepository).not.toHaveBeenCalled();
+    });
+
+    it('should propagate dispatch errors without completing provisioning', async () => {
+        vi.mocked(dispatchProvisionRepository).mockRejectedValue(
+            new Error('dispatch failed'),
+        );
+        const context = createContext();
+
+        await expect(handle(createGithubEvent(), context)).rejects.toThrow(
+            'dispatch failed',
+        );
+
+        expect(updateStatus).toHaveBeenCalledWith(1, StatusLabel.IN_PROGRESS);
+        expect(
+            context.lifecycle.steps.find(
+                ({ id }) => id === Step.PROVISION_REPOSITORY,
+            ),
+        ).toMatchObject({ status: 'in-progress' });
     });
 });
