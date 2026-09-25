@@ -4,11 +4,11 @@ import { logger } from 'hub-mason-core/utils/logger';
 
 import { AppContext } from '@/src/context/app-context';
 import { IssueType } from '@/src/utils/constants';
-import { getDispatchSecret } from '@/src/workflow/engine-dispatch';
+import { getWorkflowSecretKey } from '@/src/workflow/workflow-secret';
 
 import type { LifecycleManager } from 'hub-mason-core/lifecycle/core/manager';
+import type { EngineDispatchContext } from '@/src/types/workflow';
 import type { StepStatus } from '@/src/utils/constants';
-import type { EngineDispatchContext } from '@/src/workflow/engine-dispatch';
 import type { ProvisionRepositoryRequest } from './type';
 
 export const dispatchConfig = {
@@ -24,7 +24,7 @@ export const dispatchProvisionRepository = async (
 ): Promise<void> => {
     const app = AppContext.getInstance();
     const requestId = app.github.requestId;
-    const secret = getDispatchSecret();
+    const secret = getWorkflowSecretKey();
     const issuedAt = new Date().toISOString();
 
     const snapshot = lifecycle.getSnapshotWithMeta({
