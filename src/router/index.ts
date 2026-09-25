@@ -88,10 +88,9 @@ export const routeEvent = async (event: GithubEvent): Promise<void> => {
     } catch (err) {
         await handleError(issueNumber, err, lifecycle);
         hasError = true;
-    } finally {
-        // TODO: move this logic to handleError as hub-mason-engine will handle delegations
-        // so this workflow should not close and give summary unless failed
+    }
 
+    if (hasError) {
         await closeIssue({ issueNumber }, repository).catch(() => {});
 
         await postSummaryComment().catch((err) => {
@@ -100,9 +99,9 @@ export const routeEvent = async (event: GithubEvent): Promise<void> => {
                 `Failed to post summary comment on issue #${issueNumber}`,
             );
         });
-    }
 
-    hasError && process.exit(1);
+        process.exit(1);
+    }
 };
 
 const handleError = async (

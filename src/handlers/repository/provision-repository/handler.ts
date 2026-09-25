@@ -5,6 +5,7 @@ import { parseIssue } from '@/src/parser/issue-parser';
 import type { GithubEvent, HandlerContext } from '@/src/types/context';
 import { IssueType, StatusLabel } from '@/src/utils/constants';
 import { updateStatus } from '@/src/workflow/portal-reporter';
+import { dispatchProvisionRepository } from './dispatch';
 import { createSteps } from './lifecycle';
 import { Step } from './steps';
 import type { ProvisionRepositoryRequest } from './type';
@@ -49,6 +50,6 @@ export const handle = async (
     await updateStatus(issueNumber, StatusLabel.IN_PROGRESS);
 
     await beginStep(Step.PROVISION_REPOSITORY);
-    // TODO: trigger a repository_dispatch against the provisioning engine with issue & step metadata.
+    await dispatchProvisionRepository(request, lifecycle);
     await finishStep(Step.PROVISION_REPOSITORY);
 };
