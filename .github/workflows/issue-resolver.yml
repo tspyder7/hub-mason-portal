@@ -47,6 +47,7 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: |
             hub-mason-portal
+            hub-mason-engine
 
       # STEP_4: Resolve Issue
       - name: Resolve Issue
