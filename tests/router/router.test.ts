@@ -260,20 +260,19 @@ describe('router tests', () => {
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should close the issue and post the summary when the handler succeeds', async () => {
+    it('should leave close and summary to engine when the handler succeeds', async () => {
         const event = createGithubEvent();
 
         await routeEvent(event);
 
-        expect(closeIssue).toHaveBeenCalledWith(
-            { issueNumber: 1 },
-            { owner: 'john-doe', repo: 'test-repo' },
-        );
-        expect(postSummaryComment).toHaveBeenCalled();
+        expect(closeIssue).not.toHaveBeenCalled();
+        expect(postSummaryComment).not.toHaveBeenCalled();
+        expect(processExitSpy).not.toHaveBeenCalled();
     });
 
     it('should still post the summary when closing the issue fails', async () => {
         const event = createGithubEvent();
+        handle.mockRejectedValue(new Error('handler failed'));
         vi.mocked(closeIssue).mockRejectedValueOnce(new Error('close failed'));
 
         await routeEvent(event);
@@ -357,6 +356,7 @@ describe('router tests', () => {
 
     it('should log when posting the summary comment fails', async () => {
         const event = createGithubEvent();
+        handle.mockRejectedValue(new Error('handler failed'));
         vi.mocked(postSummaryComment).mockRejectedValueOnce(
             new Error('summary failed'),
         );
