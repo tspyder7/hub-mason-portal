@@ -260,7 +260,7 @@ describe('router tests', () => {
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should leave close and summary to engine when the handler succeeds', async () => {
+    it('should leave close and summary to workflow when the handler succeeds', async () => {
         const event = createGithubEvent();
 
         await routeEvent(event);

@@ -8,4 +8,4 @@ The hub-mason-portal repository serves as the public-facing ingestion interface 
 
 - Input Isolation & Validation: Performs regex-based string extraction from raw markdown issue bodies.
 
-- Asynchronous Handoff Routing: Authenticates via the core GitHub App and securely dispatches payload parameters to the isolated execution engine (hub-mason-engine).
+- Asynchronous Handoff Routing: Authenticates via the core GitHub App and securely dispatches payload parameters to the isolated execution workflow (hub-mason-engine).

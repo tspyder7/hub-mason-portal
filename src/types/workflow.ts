@@ -9,6 +9,6 @@ export type PortalLocator = {
     statusCommentId: number | null;
 };
 
-export type EngineDispatchContext = RequestContext<StepStatus> & {
+export type WorkflowDispatchContext = RequestContext<StepStatus> & {
     portal: PortalLocator;
 };

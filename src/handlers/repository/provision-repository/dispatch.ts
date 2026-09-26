@@ -7,7 +7,7 @@ import { IssueType } from '@/src/utils/constants';
 import { getWorkflowSecretKey } from '@/src/workflow/workflow-secret';
 
 import type { LifecycleManager } from 'hub-mason-core/lifecycle/core/manager';
-import type { EngineDispatchContext } from '@/src/types/workflow';
+import type { WorkflowDispatchContext } from '@/src/types/workflow';
 import type { StepStatus } from '@/src/utils/constants';
 import type {
     ProvisionRepositoryRequest,
@@ -57,7 +57,7 @@ export const dispatchProvisionRepository = async (
         actor: app.github.actor,
     });
 
-    const context: EngineDispatchContext = {
+    const context: WorkflowDispatchContext = {
         ...dispatchContext,
         portal: {
             owner: app.github.owner,
