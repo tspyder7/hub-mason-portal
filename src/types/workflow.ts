@@ -7,6 +7,7 @@ export type PortalLocator = {
     repo: string;
     issueNumber: number;
     statusCommentId: number | null;
+    runId: number;
 };
 
 export type WorkflowDispatchContext = RequestContext<StepStatus> & {

@@ -83,6 +83,11 @@ describe('portal-reporter', () => {
                 owner: 'john-doe',
                 repo: 'test-repo',
                 runId: 123,
+                portal: {
+                    owner: 'john-doe',
+                    repo: 'test-repo',
+                    runId: 123,
+                },
             });
         });
 
@@ -93,6 +98,11 @@ describe('portal-reporter', () => {
                 owner: 'john-doe',
                 repo: 'test-repo',
                 runId: 123,
+                portal: {
+                    owner: 'john-doe',
+                    repo: 'test-repo',
+                    runId: 123,
+                },
             });
         });
     });
