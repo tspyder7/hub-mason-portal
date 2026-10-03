@@ -97,6 +97,7 @@ describe('provision-repository dispatch', () => {
             repo: 'test-repo',
             issueNumber: 1,
             statusCommentId: null,
+            runId: 123,
         });
     });
 

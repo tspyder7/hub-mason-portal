@@ -64,6 +64,7 @@ export const dispatchProvisionRepository = async (
             repo: app.github.repo,
             issueNumber: app.issue.number,
             statusCommentId: app.statusCommentId,
+            runId: app.github.runId,
         },
     };
 

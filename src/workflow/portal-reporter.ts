@@ -26,6 +26,11 @@ export const workflowMeta = (context: AppContext): WorkflowMeta => ({
     owner: context.github.owner,
     repo: context.github.repo,
     runId: context.github.runId,
+    portal: {
+        owner: context.github.owner,
+        repo: context.github.repo,
+        runId: context.github.runId,
+    },
 });
 
 export const createPortalCommentReporter = (): Reporter<StepStatus> => ({
