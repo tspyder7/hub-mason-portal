@@ -20,19 +20,18 @@ import {
 const failedStatusFilter = (status: StepStatus): boolean =>
     status === StepStatus.FAILED;
 
-export const workflowMeta = (context: AppContext): WorkflowMeta =>
-    ({
-        requestType: context.request?.type,
-        requestId: context.request?.requestId ?? context.github.requestId,
+export const workflowMeta = (context: AppContext): WorkflowMeta => ({
+    requestType: context.request?.type,
+    requestId: context.request?.requestId ?? context.github.requestId,
+    owner: context.github.owner,
+    repo: context.github.repo,
+    runId: context.github.runId,
+    portal: {
         owner: context.github.owner,
         repo: context.github.repo,
         runId: context.github.runId,
-        portal: {
-            owner: context.github.owner,
-            repo: context.github.repo,
-            runId: context.github.runId,
-        },
-    }) as unknown as WorkflowMeta;
+    },
+});
 
 export const createPortalCommentReporter = (): Reporter<StepStatus> => ({
     onTransition: async (event) => {
