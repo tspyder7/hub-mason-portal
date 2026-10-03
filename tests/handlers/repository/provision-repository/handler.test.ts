@@ -71,16 +71,24 @@ describe('provision-repository handler', () => {
         vi.mocked(dispatchProvisionRepository).mockResolvedValue(undefined);
     });
 
-    it('should run all steps: verify issue, validate request and provision repository', async () => {
+    it('should complete verify and validate, leaving provisioning in-progress after dispatch', async () => {
         const context = createContext();
 
         await handle(createGithubEvent(), context);
 
         expect(
-            context.lifecycle.steps.every(
-                ({ status }) => status === 'completed',
+            context.lifecycle.steps.find(({ id }) => id === Step.VERIFY_ISSUE),
+        ).toMatchObject({ status: 'completed' });
+        expect(
+            context.lifecycle.steps.find(
+                ({ id }) => id === Step.VALIDATE_REQUEST,
             ),
-        ).toBe(true);
+        ).toMatchObject({ status: 'completed' });
+        expect(
+            context.lifecycle.steps.find(
+                ({ id }) => id === Step.PROVISION_REPOSITORY,
+            ),
+        ).toMatchObject({ status: 'in-progress' });
         expect(parseIssue).toHaveBeenCalledWith('issue body');
         expect(AppContext.getInstance().request).toEqual({
             type: 'repository/provision-repository',

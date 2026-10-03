@@ -51,5 +51,4 @@ export const handle = async (
 
     await beginStep(Step.PROVISION_REPOSITORY);
     await dispatchProvisionRepository(request, lifecycle);
-    await finishStep(Step.PROVISION_REPOSITORY);
 };
